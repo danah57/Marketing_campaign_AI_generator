@@ -1,0 +1,14 @@
+**pycache**/
+*.pyc
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
+.env
+venv/
+.env/
+artifacts/
+reports/
+.DS_Store
+checkpoints/

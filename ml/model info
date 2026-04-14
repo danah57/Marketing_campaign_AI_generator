@@ -1,0 +1,187 @@
+## Final Model
+
+* Model type: Dual-model production head in Stage 2: `XGBRegressor` (ROI) + `XGBClassifier` (success probability), fed by Stage 1 quantile LightGBM predictions.
+* File path:
+  * `d:\SocialMedia Marketing\AI\ml\artifacts\stage2\stage2_roi_model.pkl`
+  * `d:\SocialMedia Marketing\AI\ml\artifacts\stage2\stage2_success_model.pkl`
+* Training stage: Phase 4 / Stage 2 (`pipeline/train_stage2.py`)
+* Input shape:
+  * Stage 2 model vector: 44 features (from `artifacts/stage2/stage2_feature_columns.json`)
+  * User-facing campaign input: one campaign record normalized to preprocessing schema
+* Output:
+  * ROI regressor output (scaled) -> inverse transformed to original ROI
+  * Success classifier output: probability in [0,1]
+  * Final decision label: `LAUNCH` / `REVISE` / `DROP`
+
+Production candidate notes:
+* Multiple candidates are trained in Stage 2 via depth search (`max_depth` in `[4,6,8]`) for both ROI and classifier; best-by-validation models are selected and saved.
+* Current saved best models (per report): both are depth 8.
+
+## Inference Pipeline
+
+1) Load artifacts
+* Preprocessor + scalers from:
+  * `artifacts/onehot_encoder.pkl`
+  * `artifacts/numeric_scaler.pkl`
+  * `artifacts/roi_scaler.pkl`
+  * `artifacts/preprocessor_meta.pkl`
+* Stage 1 assets:
+  * 15 quantile models in `artifacts/stage1/*_{q10,q50,q90}.pkl`
+  * `artifacts/stage1/stage1_feature_columns.json`
+  * `artifacts/stage1/stage1_confidence_tiers.json`
+  * `artifacts/stage1_clip_bounds.json`
+* Stage 2 assets:
+  * `artifacts/stage2/stage2_roi_model.pkl`
+  * `artifacts/stage2/stage2_success_model.pkl`
+  * `artifacts/stage2/stage2_feature_columns.json`
+  * SHAP explainers in `artifacts/stage2/shap_explainer_*.pkl`
+
+2) Expected input format
+* One campaign (`dict` or one-row DataFrame), keys expected by `normalize_campaign_input()`:
+  * `Channel_Used`, `Campaign_Type`, `Audience_age_range`, `Audience_Gender` (or `Target_Audience_gender`), `Customer_Segment`, `Location`, `Language`, `Duration`, `Date`
+  * Optional: `Budget`
+
+3) Preprocessing for inference
+* Input normalization + category value mapping (`normalize_campaign_input`)
+* `CampaignPreprocessor.transform_inference_pre_execution()` applies:
+  * raw parsing (duration/date)
+  * date feature extraction
+  * ratio feature generation
+  * one-hot + numeric scaling (with training-fitted artifacts)
+* Produces pre-execution engineered row (no retraining)
+
+4) Stage 1 prediction block
+* Run 15 LightGBM quantile models (`q10/q50/q90`) for:
+  * clicks, impressions, conversion_rate, engagement_score, acquisition_cost
+* Inverse scale, clip to bounds, rescale q50 values for Stage 2
+* Derive `CTR_scaled` and `Cost_per_Click_scaled` from Stage 1 q50 originals
+
+5) Stage 2 prediction block
+* Build Stage 2 feature row in exact column order from `stage2_feature_columns.json`
+* Predict:
+  * ROI scaled -> inverse ROI scaler to `predicted_roi`
+  * Success probability -> `predict_proba(...)[1]`
+* Verdict logic:
+  * `LAUNCH` if ROI >= 6.5 and p >= 0.75
+  * `REVISE` if ROI >= 5.0 and p >= 0.50
+  * else `DROP`
+
+6) Output format
+* Dictionary with:
+  * `campaign_summary`
+  * `stage1_predictions` (q10/q50/q90 + confidence)
+  * `stage2_evaluation` (`predicted_roi`, `success_probability`, `verdict`)
+  * `shap_explanation`
+  * `confidence_warning`
+
+## Evaluation Pipeline
+
+Evaluation scripts and metrics:
+
+1) `pipeline/train_stage1.py` (Phase 3 / Stage 1)
+* Uses train/val/test splits from `data/*.csv`
+* Metrics:
+  * R2 (q50)
+  * RMSE (scaled + original units)
+  * pinball loss (q10, q50, q90)
+  * interval coverage (q10-q90)
+  * confidence tiers (`HIGH`/`MEDIUM`/`LOW`)
+* Reliability verdict: `RELIABLE` / `ACCEPTABLE` / `WEAK`
+* Evaluates on **test set** (`data/test.csv`)
+
+2) `pipeline/fix_stage1_engagement_calibration.py`
+* Recalibrates only engagement score q10/q90
+* Recomputes interval coverage and updates tiers/report
+* Evaluates on **test set**
+
+3) `pipeline/train_stage2.py` (Phase 4 / Stage 2)
+* Model selection on **validation set**:
+  * ROI: choose best depth by validation RMSE (original ROI units)
+  * Classifier: choose best depth by validation AUC-ROC
+* Final evaluation on **test set**:
+  * ROI: R2, RMSE, MAE
+  * Classifier: AUC-ROC, precision, recall, F1, confusion matrix
+  * SHAP global and sample explanation reports
+
+4) `pipeline/inference.py`
+* `run_phase5_test()`: scenario-based inference consistency checks
+* `run_phase6_validation()`: sweeps and robustness checks (ranking, monotonicity, diversity, channel bias flags)
+* Uses inference engine (no retraining)
+
+How to run evaluation:
+* `python pipeline/preprocessing.py`
+* `python pipeline/train_stage1.py`
+* `python pipeline/fix_stage1_engagement_calibration.py` (optional calibration patch)
+* `python pipeline/train_stage2.py`
+* `python pipeline/inference.py` (runs Phase 6 validation by default in `__main__`)
+
+## Required Files
+
+Only necessary to run inference (`InferenceEngine.predict_one`):
+
+* `pipeline/inference.py`
+* `pipeline/preprocessing.py`
+* `artifacts/onehot_encoder.pkl`
+* `artifacts/numeric_scaler.pkl`
+* `artifacts/roi_scaler.pkl`
+* `artifacts/preprocessor_meta.pkl`
+* `artifacts/stage1_clip_bounds.json`
+* `artifacts/stage1/stage1_feature_columns.json`
+* `artifacts/stage1/stage1_confidence_tiers.json`
+* `artifacts/stage1/clicks_q10.pkl`, `clicks_q50.pkl`, `clicks_q90.pkl`
+* `artifacts/stage1/impressions_q10.pkl`, `impressions_q50.pkl`, `impressions_q90.pkl`
+* `artifacts/stage1/conversion_rate_q10.pkl`, `conversion_rate_q50.pkl`, `conversion_rate_q90.pkl`
+* `artifacts/stage1/engagement_score_q10.pkl`, `engagement_score_q50.pkl`, `engagement_score_q90.pkl`
+* `artifacts/stage1/acquisition_cost_q10.pkl`, `acquisition_cost_q50.pkl`, `acquisition_cost_q90.pkl`
+* `artifacts/stage2/stage2_feature_columns.json`
+* `artifacts/stage2/stage2_roi_model.pkl`
+* `artifacts/stage2/stage2_success_model.pkl`
+* `artifacts/stage2/shap_explainer_roi.pkl`
+* `artifacts/stage2/shap_explainer_success.pkl`
+
+## Optional / Unused Code
+
+Not required for runtime inference:
+
+* `_phase1_audit.py` (data audit utility)
+* `pipeline/preprocessing.py` `run_full_pipeline` path (training-time generation of splits/artifacts)
+* `pipeline/train_stage1.py` (training/evaluation only)
+* `pipeline/fix_stage1_engagement_calibration.py` (one-time recalibration utility)
+* `pipeline/train_stage2.py` (training/evaluation only)
+* `reports/*` (documentation outputs only)
+* `notebook.ipynb` (exploration)
+
+## How To Run Final Model
+
+Exact code example:
+
+```python
+from pipeline.inference import InferenceEngine
+
+engine = InferenceEngine()
+
+campaign = {
+    "Channel_Used": "Instagram",
+    "Campaign_Type": "Search",
+    "Audience_age_range": "25-34",
+    "Audience_Gender": "Men",
+    "Customer_Segment": "Tech Enthusiasts",
+    "Location": "New York",
+    "Language": "English",
+    "Duration": 30,
+    "Date": "2024-06-15",
+    "Budget": 12000,
+}
+
+output = engine.predict_one(campaign, verbose=False, include_shap=True)
+
+print("Predicted ROI:", output["stage2_evaluation"]["predicted_roi"])
+print("Success probability:", output["stage2_evaluation"]["success_probability"])
+print("Verdict:", output["stage2_evaluation"]["verdict"])
+print("Stage1 intervals:", output["stage1_predictions"])
+```
+
+## Architecture Summary
+
+Data (campaign dict) -> Input normalization -> Phase 2 preprocessor (parse/date/ratio/OHE/scaling) -> Stage 1 quantile LightGBM models (5 metrics x q10/q50/q90) -> Stage 2 XGBoost ROI regressor + XGBoost success classifier -> ROI + success probability + verdict (+ SHAP explanation)
+
