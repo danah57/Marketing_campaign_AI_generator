@@ -1,66 +1,157 @@
-# Marketing_campaign_AI_generator
+# NexBrand AI Campaign Engine
 
 > *"From brief to viral, powered by AI."*
 
 ## Overview
 
-NexBrand AI Campaign Engine is a **multi-stage campaign generator** built in Python. It accepts a structured **Campaign** brief (Pydantic-validated JSON), persists the brief as **stage 1**, then runs **eight downstream processing stages**—**2–6** (Claude-driven analysis, strategy, and tactical content), **7b** (optional influencer matching), **7** (ML evaluation plus narrative explanation), and **8** (calendar). Each step produces JSON merged into a shared **`context`** dict and, by default, checkpoint files under **`checkpoints/{job_id}/`**. Claude stages return strict JSON: business summary and tone, competitor gaps, audience persona, campaign strategy, **`platform_content`** with **A/B** post variants and virality fields, ranked influencers with outreach and budget splits when candidates are supplied, then a phased day-by-day calendar. The synchronous **`POST /generate`** returns **`GenerateResponse`**; **`POST /generate/stream`** emits **SSE** progress (`stage_complete`, `complete`, `error`) and the same assembled **`result`** payload at the end.
+This repository is the **Python FastAPI AI service** for the NexBrand / CampaignCraft graduation project. It turns a structured **CampaignBrief** into a full campaign package: business analysis, competitor and audience insights, strategy, tactical content (A/B posts), optional influencer matches, ML evaluation, and a day-by-day calendar.
 
-Within the broader **NexBrand AI** platform, this repository is the **FastAPI AI service**: the **React** front end and **Node.js** API gateway call these endpoints over HTTP. **PostgreSQL** is not accessed from this service—brand records, tone profiles, and influencer rows are owned by Node; **influencer candidates** are passed inline on the brief as `influencer_candidates` when stage **7b** should run. **Stage 7** optionally loads an external **ML** stack from **`ML_ROOT_PATH`** (`InferenceEngine` in `pipeline/inference.py`) for scoring and SHAP-style explanations, with Claude (via `utils/llm_client`) drafting the written explanation in real mode.
+The service does **not** replace your main backend. In production:
 
----
-
-## Architecture
+1. **React** collects the brand profile, campaign form, and tone settings.
+2. **React** calls **Node.js** to persist owners, campaigns, and influencer profiles in **PostgreSQL**.
+3. When the user runs “Generate campaign”, **Node.js** (or React via Node) builds a `CampaignBrief` JSON payload and **POSTs it to this engine** (`http://localhost:8000/generate` or `/generate/stream`).
+4. This engine returns **`GenerateResponse`** JSON; **Node.js** may save the result back to PostgreSQL; **React** renders strategy, calendar, and influencer cards.
 
 ```mermaid
-flowchart LR
-  subgraph clients [Clients]
+flowchart TB
+  subgraph ui [Frontend]
     React[React app]
-    Node[Node.js API]
   end
-  subgraph engine [Campaign Engine - this repo]
-    FastAPI[FastAPI main.py]
-    Pipe[pipeline.run / stream_pipeline]
-    CP[CheckpointManager checkpoints/]
+  subgraph node_layer [Node.js API - main backend]
+    Node[Express / API routes]
+    NodeDB[(PostgreSQL)]
+  end
+  subgraph ai [This repo - FastAPI AI engine]
+    FastAPI[main.py]
+    Pipe[agentpipeline.run]
+    CP[checkpoints/]
     Claude[Anthropic Claude Haiku]
+    Loader[services/influencer_loader]
     ML[ML InferenceEngine optional]
   end
-  DB[(PostgreSQL)]
-  React --> Node
-  Node -->|HTTP JSON brief| FastAPI
+  React -->|REST: save profile, campaigns, influencers| Node
+  Node --> NodeDB
+  React -->|optional: direct dev call| FastAPI
+  Node -->|POST CampaignBrief JSON| FastAPI
   FastAPI --> Pipe
   Pipe --> CP
   Pipe --> Claude
+  Pipe --> Loader
   Pipe --> ML
-  Node --> DB
+  Loader -.->|optional fallback| NodeDB
+  FastAPI -->|GenerateResponse| Node
+  Node --> React
 ```
 
-| Layer | Role |
-|--------|------|
-| **FastAPI** (`main.py`) | Validates `CampaignBrief`, runs `pipeline.run` or SSE `stream_pipeline`, CORS, global exception logging. |
-| **`pipeline.py`** | Orchestrates `_run_stage()` for each step; merges outputs into `context`; assembles `strategy` + `final_response`. |
-| **`CheckpointManager`** | Files under `checkpoints/{job_id}/stage_{N}.json` (numeric `N` or `7b`); resumes from cache when present. |
-| **`stages/*.py`** | Pure functions `run(brief_dict, context, job_id) -> dict`; Claude stages use `call_claude`; mock path via `USE_MOCK_LLM`. |
-| **`utils/claude_client.py`** | Shared Anthropic client, JSON fence stripping, rate-limit retry once, structured error handling. |
-| **`schemas.py`** | `CampaignBrief`, `GenerateResponse`, `BrandToneProfile`, `InfluencerProfile`, `InfluencerMatch`, `StageCheckpointResponse`. |
-
-**Data flow:** Node sends a POST body matching **`CampaignBrief`**. Stage 1 stores the brief. Each later stage reads **`brief_dict`** and accumulated **`context`** (e.g. `tone_descriptor` from stage 2 for stage 3). Stage **7b** skips with empty `influencer_matches` when `influencer_candidates` is absent. Stage **8** uses stage **5** duration and stage **6** `posting_frequency` or **`platform_content`** keys for channels.
+| Component | Responsibility |
+|-----------|----------------|
+| **React** | UI, forms, `buildCampaignBriefPayload`, display strategy/calendar/influencers |
+| **Node.js** | Auth, CRUD, PostgreSQL (`InfluencerProfiles`, campaigns, users), orchestration |
+| **PostgreSQL** | Source of truth for influencer rows and saved campaign outputs |
+| **FastAPI (this repo)** | Stateless AI pipeline; checkpoints on disk per `job_id` |
 
 ---
 
-## Pipeline stages
+## Pipeline (stages 1 → 2–6 → 7b → 7 → 8)
 
-| Stage | Module | Purpose |
-|-------|--------|---------|
-| **1** | `pipeline.run` | Saves validated brief; no LLM. |
-| **2** | `stage2_business` | Brand summary, strengths, tone, budget tier, readiness. |
-| **3** | `stage3_competitors` | Landscape, gaps, positioning, channels to prioritize. |
-| **4** | `stage4_audience` | Single persona JSON (pain points, hooks, `platform_behaviour`). |
-| **5** | `stage5_strategy` | Campaign summary object, pillars, funnel strings, KPI objects, budget split percents. |
-| **6** | `stage6_tactical` | `platform_content` per channel, A/B posts, checklist, hashtags; mock includes `posting_frequency`. |
-| **7b** | `stage7b_influencer` | Ranks top influencers, budgets, outreach; skipped if no candidates. |
-| **7** | `stage7_evaluation` | ML verdict + SHAP fields + `written_explanation` (requires `ML_ROOT_PATH` when not mock). |
-| **8** | `stage8_calendar` | Day-by-day calendar JSON (`total_days`, `days`, …). |
+Orchestration lives in **`agentpipeline.py`** (not `pipeline.py`). Each stage implements `run(brief_dict, context, job_id) -> dict`. Outputs merge into a shared **`context`** dict and are checkpointed under **`checkpoints/{job_id}/stage_{N}.json`** (including **`stage_7b.json`**).
+
+| Stage | Module | LLM? | Purpose |
+|-------|--------|------|---------|
+| **1** | `agentpipeline.run` | No | Validate and store brief |
+| **2** | `stage2_business` | Claude | Business summary, tone, budget tier |
+| **3** | `stage3_competitors` | Claude | Competitor gaps, channels to prioritize |
+| **4** | `stage4_audience` | Claude | Persona, hooks, platform behaviour |
+| **5** | `stage5_strategy` | Claude | Campaign summary, pillars, KPIs, budget split |
+| **6** | `stage6_tactical` | Claude | `platform_content`, A/B posts, virality fields |
+| **7b** | `stage7b_influencer` | Optional Claude | Rank influencers, outreach copy (see below) |
+| **7** | `stage7_evaluation` | ML + optional Claude | `InferenceEngine` verdict + `written_explanation` |
+| **8** | `stage8_calendar` | Claude | Weekly/daily calendar from stage 5–6 context |
+
+**Mock mode:** set `USE_MOCK_LLM=true`, or use a missing/invalid `ANTHROPIC_API_KEY` (must start with `sk-ant-`). Stages 2–6 and 8 use deterministic mocks; stage 7 can skip ML with `SKIP_ML_EVALUATION=true`.
+
+---
+
+## Influencer loader (`services/influencer_loader.py`)
+
+Used by **stage 7b** when the request does not supply usable inline candidates. This is a **read-only** helper; primary influencer data should still be owned by **Node.js + PostgreSQL**.
+
+### What it does
+
+1. **`load_influencer_candidates(limit=20)`** — main entry point called from `stage7b_influencer.run`.
+2. **Cache first** — reads `data/influencer_cache.json` if the file exists and contains rows (fast, no network).
+3. **PostgreSQL fallback** — if cache is empty and `INFLUENCER_USE_DB` is not disabled, connects with a **3s connect timeout** (`DB_CONNECT_TIMEOUT_SECONDS`) and runs:
+
+   ```sql
+   SELECT id, "primaryPlatform", "followersCount", "engagementRate",
+          categories, "contentTypes", "collaborationTypes",
+          "audienceAgeRange", "audienceGender", "audienceLocation", interests
+   FROM "InfluencerProfiles"
+   WHERE "isOnboarded" = true
+   LIMIT :limit
+   ```
+
+4. **Normalization** — `parse_followers` / `parse_engagement` convert strings like `"84K"` and `"5.8%"` to numbers; `_normalize_row` returns a consistent dict for scoring.
+
+5. **`save_to_file()`** — CLI helper (`python -m services.influencer_loader`) to refresh the cache from DB for offline dev.
+
+### Environment
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `DATABASE_URL` | local Postgres URL | Same DB Node uses (optional for AI service) |
+| `INFLUENCER_USE_DB` | `true` | Set `false` to never hit Postgres from Python |
+| `DB_CONNECT_TIMEOUT_SECONDS` | `3` | Avoid hanging when DB is down |
+
+### Important
+
+- **Node.js is the recommended path:** query onboarded influencers in Node and attach them to the POST body as `influencer_candidates` (see `test_payload.json` for shape).
+- **`CampaignBrief` in `schemas.py` does not yet declare `influencer_candidates`**, so FastAPI validation may **drop** that field before the pipeline runs. Until the schema is extended, stage 7b relies on **`load_influencer_candidates()`** only. Add `influencer_candidates: list[InfluencerProfile] | None = None` to `CampaignBrief` if Node should pass rows through validation.
+
+---
+
+## Stage 7b — Influencer matching (`stages/stage7b_influencer.py`)
+
+Runs **after** stage 6 (tactical content) and **before** stage 7 (ML evaluation).
+
+### Candidate sources (in order)
+
+1. **`brief_dict["influencer_candidates"]`** — if present after validation (from Node).
+2. **`load_influencer_candidates()`** — cache file, then optional Postgres.
+3. If still empty → returns `influencer_stage_skipped: true` and empty `influencer_matches`.
+
+### Scoring (deterministic — not Claude)
+
+`compute_influencer_score` builds a **rule-based fit score** per influencer:
+
+| Signal | Points (approx.) |
+|--------|------------------|
+| Platform in campaign channels | +2.0 |
+| Engagement rate (capped) | up to +3.0 |
+| Follower reach (capped) | up to +2.0 |
+| Category overlap with campaign | +1.5 per match |
+| Audience age match | +1.5 |
+| Audience gender match | +1.0 |
+
+`rank_influencers` sorts by score; `select_top_influencers` keeps up to **3** creators with score **≥ 5.0**.
+
+Campaign context for scoring uses `channels_to_prioritize` or `current_channels`, plus `age_range` / `gender_skew` from earlier stages when available.
+
+### Claude’s role (optional)
+
+If mock mode is off and there are selected matches, Claude Haiku (**max 800 tokens**) only generates:
+
+- `strategy_note` — short overview of the creator set  
+- `outreach_templates` — per-`influencer_id` outreach messages  
+
+Fit scores and reasoning come from the **rules engine**, not the LLM.
+
+### Response fields (merged into `GenerateResponse`)
+
+- `influencer_matches[]` — `influencer_id`, `fit_score`, `fit_reasoning`, `suggested_collaboration_type`, `suggested_budget_usd`, `outreach_message`
+- `influencer_strategy_note`
+- `influencer_stage_skipped`
 
 ---
 
@@ -68,25 +159,28 @@ flowchart LR
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/health` | Liveness: `{"status": "ok"}`. |
-| `GET` | `/health/detailed` | Model name, mock flag, stage list `1`–`8` including `7b`, endpoint index. |
-| `POST` | `/generate` | Full pipeline; response **`GenerateResponse`**. |
-| `POST` | `/generate/stream` | `text/event-stream`: events `stage_complete`, `complete` (with `result`), or `error`. Clients should use **`fetch` + `ReadableStream`** (not `EventSource` for POST). |
+| `GET` | `/health` | `{"status": "ok"}` |
+| `GET` | `/health/detailed` | Mock mode, Anthropic configured, stage order |
+| `POST` | `/generate` | Full pipeline (async, default **180s** timeout → **504** if exceeded) |
+| `POST` | `/generate/stream` | SSE: `stage_complete`, `complete`, `error` (use `fetch` + `ReadableStream`, not `EventSource`) |
 
 ---
 
-## Configuration
+## Configuration (`.env`)
 
-Load environment from **`.env`** (see **`.env.example`**).
+See **`.env.example`**.
 
 | Variable | Purpose |
 |----------|---------|
-| **`ANTHROPIC_API_KEY`** | Required for real Claude calls. |
-| **`ANTHROPIC_MODEL`** | Optional override (default in client: `claude-haiku-4-5`). |
-| **`USE_MOCK_LLM`** | `true` skips paid API and ML real path where supported. |
-| **`DEBUG_LLM`** | Verbose LLM logging for `campaign_model.llm`. |
-| **`ML_ROOT_PATH`** | Root of external ML project containing `pipeline/inference.py` for stage 7. |
-| **`ALLOWED_ORIGINS`** | Extra CORS origins (comma-separated); app also documents localhost patterns in code. |
+| `ANTHROPIC_API_KEY` | Anthropic key (`sk-ant-...` only) |
+| `USE_MOCK_LLM` | `true` = no paid API calls |
+| `ANTHROPIC_TIMEOUT_SECONDS` | Per-request Claude timeout (default 90) |
+| `PIPELINE_TIMEOUT_SECONDS` | `/generate` wall clock (default 180) |
+| `STAGE_TIMEOUT_SECONDS` | Per-stage limit on `/generate/stream` (default 120) |
+| `ML_ROOT_PATH` | Folder containing `ml/pipeline/inference.py` |
+| `SKIP_ML_EVALUATION` | `true` = stage 7 uses mock ML scores |
+| `DATABASE_URL` / `INFLUENCER_USE_DB` | Influencer loader Postgres fallback |
+| `ALLOWED_ORIGINS` | Extra CORS origins (app also allows `*`) |
 
 ---
 
@@ -94,259 +188,61 @@ Load environment from **`.env`** (see **`.env.example`**).
 
 ```bash
 python -m venv .venv
-.venv\Scripts\activate   # Windows
+.venv\Scripts\activate          # Windows
+# source .venv/bin/activate     # macOS/Linux
 pip install -r requirements.txt
-# copy .env.example to .env and set ANTHROPIC_API_KEY (and ML_ROOT_PATH for real stage 7)
-uvicorn main:app --reload
-```
-
-Default app title: **Campaign Strategy Backend**. Primary integration port in CORS comments: **3000** (React).
-
----
-
-## Key response shapes
-
-- **`strategy`**: Stage 5 fields plus **`tactical_plan`** (stage 6 output) and **`influencer_strategy_note`** from stage 7b.
-- **`calendar`**: Stage 8 object (`total_days`, `start_date`, `days`, …).
-- **`influencer_matches`**, **`influencer_strategy_note`**, **`influencer_stage_skipped`**: From stage 7b (skipped when no candidates).
-
----
-
-## Project layout (selected)
-
-| Path | Notes |
-|------|--------|
-| `main.py` | FastAPI app, `/generate`, `/generate/stream`, health routes. |
-| `pipeline.py` | `run()`, `_run_stage()`, `CheckpointManager`, shared `checkpoint` instance. |
-| `schemas.py` | Request/response and influencer models. |
-| `stages/` | One module per pipeline step after stage 1. |
-| `utils/claude_client.py` | Claude Haiku JSON helper for stages 2–6 and 7b. |
-| `utils/llm_client.py` | Separate Anthropic JSON helper used by stage 7 explanation path. |
-| `utils/llm_runtime.py` | `use_mock_llm()`, `debug_llm()`. |
-| `checkpoints/` | Per-`job_id` JSON artifacts (when `DEBUG_KEEP_CHECKPOINTS` is true in `pipeline.py`). |
-
----
-
-React.js Frontend
-│
-│  POST /generate  (CampaignBrief JSON + influencer_candidates)
-▼
-FastAPI Python Backend (main.py)
-│
-▼
-pipeline.run(brief)
-│
-├─ Stage 1  — Data Collection       (no LLM — reads brief + saves checkpoint)
-├─ Stage 2  — Business Analysis     (Claude Haiku — tone + strengths + memory)
-├─ Stage 3  — Competitor Intel      (Claude Haiku — gaps + opportunities)
-├─ Stage 4  — Audience Profiling    (Claude Haiku — persona + hooks)
-├─ Stage 5  — Campaign Strategy     (Claude Haiku — message + pillars + KPIs)
-├─ Stage 6  — Content Generation    (Claude Haiku — A/B posts + virality scores)
-├─ Stage 7b — Influencer Matching   (Claude Haiku — fit scores + outreach)
-├─ Stage 7  — ML Evaluation         (InferenceEngine + Claude Haiku explanation)
-└─ Stage 8  — Campaign Calendar     (Claude Haiku — posting schedule)
-│
-▼
-GenerateResponse JSON
-(strategy, calendar, influencer_matches)
-│
-▼
-Node.js Frontend renders results
----
-
-## Setup & Installation
-
-```bash
-# 1. Clone the repository
-git clone <repo-url>
-cd campaign-engine
-
-# 2. Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Configure environment
-cp .env.example .env
-# Open .env and set ANTHROPIC_API_KEY
-
-# 5. Run the server
+copy .env.example .env          # Windows
+# cp .env.example .env          # macOS/Linux
+# Set ANTHROPIC_API_KEY or USE_MOCK_LLM=true
 uvicorn main:app --reload --port 8000
 ```
 
----
-
-## Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `ANTHROPIC_API_KEY` | Your Anthropic API key (get from console.anthropic.com) | ✅ Yes |
-| `ALLOWED_ORIGINS` | Comma-separated CORS origins (e.g. `http://localhost:3000`) | No |
-| `ML_ROOT_PATH` | Absolute path to ML project containing `pipeline/inference.py` | For Stage 7 real mode |
-| `USE_MOCK_LLM` | Set to `true` to skip all Claude calls and return mock data | No |
-| `DEBUG_LLM` | Set to `true` for verbose LLM request/response logging | No |
+React dev server is typically **http://localhost:3000**; AI engine **http://localhost:8000**.
 
 ---
 
-## API Endpoints
+## Node.js + React integration
 
-### `GET /health`
-Basic health check.
-**Response:** `{"status": "ok"}`
+### 1. Save data in Node (PostgreSQL)
 
-### `GET /health/detailed`
-Detailed status including model name, mock mode, and stage list.
-**Response:** `{"status": "ok", "claude_model": "claude-haiku-4-5", "mock_mode": false, "stages": [...]}`
+- Owner / brand profile, `BrandToneProfile`, competitors  
+- Campaign rows when the user saves a draft  
+- `InfluencerProfiles` when influencers complete onboarding  
 
-### `POST /generate`
-Run the full 8-stage pipeline synchronously and return the complete result.
+### 2. Build brief in React
 
-**Request body:** `CampaignBrief` JSON (see Schemas section)
-**Response:** `GenerateResponse` JSON
+Map UI fields to **`CampaignBrief`** literals (exact `industry`, `campaign_goal`, `current_channels` enums — see `schemas.py`). Example helpers live in the frontend `buildCampaignBriefPayload` / `GOAL_MAP`.
 
-```json
-{
-  "strategy": { "campaign_summary": {}, "core_message": "...", ... },
-  "calendar":  { "total_days": 42, "start_date": "2025-01-01", "days": [] },
-  "influencer_matches": [ { "influencer_id": 1, "fit_score": 8.7, ... } ],
-  "influencer_strategy_note": "...",
-  "influencer_stage_skipped": false
-}
-```
-
-### `POST /generate/stream`
-Same as `/generate` but streams stage progress as Server-Sent Events.
-Use `fetch()` with `ReadableStream` — not `EventSource` (which does not support POST body).
-
-**SSE event types:**
-| Event | Payload |
-|-------|---------|
-| `stage_complete` | `{"event": "stage_complete", "stage": "2", "stage_name": "Business Analysis", "progress": 18}` |
-| `complete` | `{"event": "complete", "progress": 100, "result": { ...full GenerateResponse... }}` |
-| `error` | `{"event": "error", "message": "Stage 6 failed — AI response error: ...", "progress": -1}` |
-
----
-
-## The 8-Stage Pipeline
-
-| Stage | Name | LLM | Key Inputs | Key Outputs Added to Context |
-|-------|------|-----|-----------|------------------------------|
-| 1 | Data Collection | None | CampaignBrief fields | Raw brief dict saved to checkpoint |
-| 2 | Business Analysis | Claude Haiku | brand_name, USP, tone profile, past campaigns | business_summary, tone_descriptor, tone_guidelines, budget_tier, recommended_focus |
-| 3 | Competitor Intelligence | Claude Haiku | competitors[], tone_descriptor, channels | content_gaps, positioning_opportunity, channels_to_prioritize |
-| 4 | Audience Profiling | Claude Haiku | target_market, persona, platform behaviour | persona_name, pain_points, messaging_hooks, platform_behaviour |
-| 5 | Campaign Strategy | Claude Haiku | All prior context | campaign_summary, core_message, content_pillars, kpis, budget_allocation |
-| 6 | Content Generation | Claude Haiku | core_message, tone, channels, persona | platform_content (A/B posts per platform), virality scores, hashtag set |
-| 7b | Influencer Matching | Claude Haiku | influencer_candidates[], budget_allocation, persona | influencer_matches[], influencer_strategy_note |
-| 7 | ML Evaluation | InferenceEngine + Claude Haiku | channel, duration, budget, segment | ml_score, ml_verdict, predicted_roi, written_explanation |
-| 8 | Campaign Calendar | Claude Haiku | platform_content, posting_frequency, duration | calendar days[], start_date, total_days |
-
----
-
-## Brand Tone Profile
-
-When a user completes onboarding, their brand tone is captured as a `BrandToneProfile`:
-
-```json
-{
-  "tone_formality":   3,
-  "tone_playfulness": 4,
-  "tone_boldness":    5,
-  "preferred_vocabulary": ["innovative", "community", "bold"],
-  "avoided_vocabulary":   ["cheap", "discount", "basic"]
-}
-```
-
-This profile is injected into the Stage 2 system prompt and flows through context into
-every subsequent stage. Stages 3–6 inherit `tone_descriptor` and `tone_guidelines` so
-every generated post, outreach message, and strategic recommendation matches the brand voice.
-
----
-
-## Influencer Matching (Stage 7b)
-
-Stage 7b is triggered when the Node.js backend includes `influencer_candidates` in the brief.
-
-**How it works:**
-1. Node.js queries `InfluencerProfiles WHERE isCompleted=true AND isOnboarded=true LIMIT 20`
-2. The rows are serialised as `influencer_candidates` inside the POST body
-3. Stage 7b formats each candidate into a compact profile string for the prompt
-4. Claude Haiku scores each candidate (0–10) against the campaign persona, platforms, and budget
-5. Top 3 influencers with score ≥ 5.0 are returned with fit reasoning, outreach messages, and budget split
-
-**Fit score criteria:**
-- Audience age match with persona: up to +3.0
-- Platform matches priority channels: up to +2.0
-- Categories align with brand industry: up to +2.0
-- Engagement rate above 3%: +1.0 | above 6%: +2.0
-- Collaboration types match campaign goal: +1.0
-
----
-
-## A/B Content Variants & Virality Scoring
-
-Stage 6 generates two post variants (A and B) per active platform. Each variant is scored on a 1–10 virality scale using this rubric:
-
-| Criterion | Score |
-|-----------|-------|
-| Caption opens with question or bold statement | +2 |
-| Clear emotional hook (curiosity, aspiration, urgency, humor) | +2 |
-| Strong call to action | +1 |
-| Social proof or data reference | +1 |
-| Platform-native format (reel hook, carousel tease, thread) | +1 |
-| Caption exceeds platform character limit | −1 |
-| No hashtags (Instagram/TikTok) | −1 |
-
-Each variant includes: caption, hashtags, visual direction, CTA, virality score, and one-sentence explanation.
-
----
-
-## Campaign Memory & Learning
-
-Stage 2 reads `has_previous_campaigns` and `previous_campaign_description` from the brief.
-When past campaign data exists, it is injected into the Stage 2 user prompt as a memory block: 
-If a pipeline run fails at Stage 6, re-submitting the same `job_id` resumes from Stage 6
-without re-calling the API for Stages 1–5. This saves cost and time during development.
-
-Set `DEBUG_KEEP_CHECKPOINTS=False` in pipeline.py (or via env) to auto-delete after completion.
-
----
-
-## Node.js Integration Guide
-
-### Calling /generate
+### 3. Node calls the AI engine
 
 ```javascript
-// 1. Query influencer candidates from PostgreSQL before calling the AI engine
-const influencers = await db.query(`
+// Recommended: load influencers in Node from the same DB React uses
+const { rows } = await db.query(`
   SELECT id, bio, "primaryPlatform", "followersCount", "engagementRate",
          categories, "contentTypes", "collaborationTypes",
          "audienceAgeRange", "audienceGender", "audienceLocation",
          interests, "socialMediaLinks"
   FROM "InfluencerProfiles"
-  WHERE "isCompleted" = true AND "isOnboarded" = true
+  WHERE "isOnboarded" = true
   LIMIT 20
 `);
 
-// 2. Build the full brief payload
 const payload = {
-  ...campaignBriefFromForm,
-  influencer_candidates: influencers.rows,
+  ...campaignBriefFromDbOrForm,
+  influencer_candidates: rows,  // add field to CampaignBrief in schemas.py to retain this
 };
 
-// 3. Call the FastAPI engine
 const response = await fetch('http://localhost:8000/generate', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(payload),
+  timeout: 200000,  // axios: { timeout: 200000 }
 });
 const result = await response.json();
-// result.influencer_matches contains the top 3 ranked influencers
+// Save result.strategy / result.calendar / result.influencer_matches in Node if needed
 ```
 
-### Calling /generate/stream (for live progress bar)
+### 4. Streaming progress (optional)
 
 ```javascript
 const res = await fetch('http://localhost:8000/generate/stream', {
@@ -356,54 +252,80 @@ const res = await fetch('http://localhost:8000/generate/stream', {
 });
 const reader = res.body.getReader();
 const decoder = new TextDecoder();
-
 while (true) {
   const { done, value } = await reader.read();
   if (done) break;
-  const lines = decoder.decode(value).split('\n');
-  for (const line of lines) {
+  for (const line of decoder.decode(value).split('\n')) {
     if (!line.startsWith('data: ')) continue;
     const event = JSON.parse(line.slice(6));
-    if (event.event === 'stage_complete') updateProgressBar(event.progress, event.stage_name);
-    if (event.event === 'complete')       handleFinalResult(event.result);
-    if (event.event === 'error')          handleError(event.message);
+    if (event.event === 'stage_complete') updateProgress(event.progress, event.stage_name);
+    if (event.event === 'complete') handleResult(event.result);
+    if (event.event === 'error') handleError(event.message);
   }
 }
 ```
 
 ---
 
-## Cost Estimation
+## Key schemas (`schemas.py`)
 
-| Item | Estimate |
-|------|----------|
-| Model | Claude Haiku (`claude-haiku-4-5`) |
-| Input token cost | ~$0.001 per 1K tokens |
-| Output token cost | ~$0.005 per 1K tokens |
-| Avg tokens per full pipeline run | ~14,000 input + ~7,000 output |
-| **Cost per campaign run** | **~$0.05** |
-| 100 campaigns/day | ~$5/day |
-| 1,000 campaigns/day | ~$50/day |
+- **`CampaignBrief`** — request body for `/generate`  
+- **`BrandToneProfile`** — tone sliders and vocabulary lists  
+- **`InfluencerProfile`** / **`InfluencerMatch`** — influencer shapes (match is output)  
+- **`GenerateResponse`** — `strategy`, `calendar`, `influencer_matches`, `influencer_strategy_note`, `influencer_stage_skipped`  
 
-For a graduation project demo with low traffic, cost is negligible.
+Test fixtures: **`test_payload.json`** (with influencers), **`test_payload_no_influencers.json`**.
 
 ---
 
-## Known Limitations & Future Work
+## Project layout
 
-- **Real social media APIs** — posting is currently calendar-based planning only; actual publishing requires Meta, LinkedIn, and TikTok API integrations
-- **Influencer verification** — engagement rate and follower count are self-reported in the DB; no third-party verification layer yet
-- **ML model coverage** — Stage 7 InferenceEngine requires a separately trained model; USE_MOCK_LLM=true bypasses it for development
-- **Async parallel stages** — stages run sequentially; Stages 3 and 4 could run in parallel for 30–40% speed improvement
-- **Multi-user auth** — no authentication layer in the FastAPI engine; relies on Node.js JWT middleware upstream
-- **Real competitor monitoring** — competitor analysis is AI-generated from stored data; no live web monitoring
-- **Influencer pricing negotiation** — budget splits are AI suggestions; no contract or payment flow in this engine
+| Path | Role |
+|------|------|
+| `main.py` | FastAPI app, CORS, `/generate`, `/generate/stream`, health |
+| `agentpipeline.py` | `run()`, `_run_stage()`, `CheckpointManager` |
+| `schemas.py` | Pydantic models |
+| `stages/` | Stage 2–8 + `stage7b_influencer.py` |
+| `services/influencer_loader.py` | Cache + optional Postgres load for 7b |
+| `utils/claude_client.py` | Claude JSON for stages 2–6, 7b, 8 |
+| `utils/llm_client.py` | Claude JSON for stage 7 explanation |
+| `utils/llm_runtime.py` | Mock mode, auth fallback, `run_llm_stage()` |
+| `ml/` | ML artifacts + `pipeline/inference.py` for stage 7 |
+| `data/influencer_cache.json` | Offline influencer cache for loader |
+| `checkpoints/` | Per-job stage JSON (resume on retry) |
+
+---
+
+## Brand tone profile
+
+Captured in React/Node onboarding as **`BrandToneProfile`** (`tone_formality`, `tone_playfulness`, `tone_boldness`, preferred/avoided vocabulary). Stage 2 injects it into prompts; later stages inherit **`tone_descriptor`** / **`tone_guidelines`** from context.
+
+---
+
+## Checkpoints
+
+Failed stages write `stage_failed: true`; the next run **re-executes** that stage. Successful stages reload from disk (saves API cost). Set `DEBUG_KEEP_CHECKPOINTS = False` in `agentpipeline.py` to delete checkpoints after success.
+
+---
+
+## Cost estimate (Claude Haiku)
+
+Roughly **~$0.05** per full live run (~14k input + ~7k output tokens across stages). Use **`USE_MOCK_LLM=true`** for demos and CI.
+
+---
+
+## Known limitations
+
+- Calendar is planning only — no live posting to Meta/TikTok/LinkedIn APIs  
+- Influencer metrics are DB self-reported; no third-party verification  
+- Stages run **sequentially** (parallel 3+4 possible later)  
+- No auth on FastAPI — rely on Node.js JWT upstream  
+- **`influencer_candidates` on POST body** requires a schema update to survive Pydantic validation  
+- Competitor analysis is LLM-generated from brief data, not live web scraping  
 
 ---
 
 ## Team
 
-Built by [Danah Safwat]
-[Helwan University] — Computer Science / SoftwareEngineering
-Graduation Project, [2026]
-
+Built by **Danah Safwat** — Helwan University, Computer Science / Software Engineering  
+Graduation project, **2026**
