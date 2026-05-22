@@ -1,0 +1,504 @@
+{
+  "strategy": {
+    "campaign_summary": {
+      "campaign_type": "Social Media",
+      "channel_mix": [
+        "Instagram",
+        "TikTok"
+      ],
+      "tone_of_voice": "Honest, direct, and quietly confident \u2014 never preachy or activist",
+      "campaign_theme": "Proof Not Promises",
+      "duration_weeks": 8,
+      "target_audience": "Eco-conscious males aged 25-34 in the US"
+    },
+    "positioning_statement": "EcoWear is the sustainable clothing brand for people who want proof, not promises \u2014 affordable, transparent, and built for everyday life rather than outdoor expeditions or luxury wardrobes.",
+    "core_message": "We show you exactly where your clothes come from, who made them, and what it cost the planet \u2014 because you deserve to know before you buy.",
+    "campaign_hooks": [
+      "We filmed our entire supply chain so you never have to take our word for it",
+      "The sustainable clothing brand that finally made something for him",
+      "Same planet. Better wardrobe. Half the price of Patagonia."
+    ],
+    "content_pillars": [
+      {
+        "pillar": "Supply Chain Transparency",
+        "description": "Documentary-style content showing the real journey from raw material to finished garment.",
+        "examples": [
+          "Meet the farmer who grew your cotton \u2014 a 60-second TikTok",
+          "The true cost of making one EcoWear t-shirt \u2014 Instagram carousel",
+          "Carbon calculation breakdown for our bestselling hoodie \u2014 Instagram Story"
+        ]
+      },
+      {
+        "pillar": "Real People Real Wardrobes",
+        "description": "UGC-style content featuring actual customers styling EcoWear in their everyday lives.",
+        "examples": [
+          "5 ways I style my EcoWear hoodie for the office \u2014 TikTok",
+          "My first month wearing only sustainable brands \u2014 Instagram Reel",
+          "Why I switched from Patagonia to EcoWear \u2014 customer story post"
+        ]
+      },
+      {
+        "pillar": "Myth Busting",
+        "description": "Direct comparison content debunking greenwashing myths and positioning EcoWear as the honest alternative.",
+        "examples": [
+          "What sustainable fashion brands won't show you \u2014 TikTok",
+          "Greenwashing vs real sustainability \u2014 what to look for \u2014 Instagram carousel",
+          "We checked our competitors' claims so you don't have to \u2014 blog post"
+        ]
+      }
+    ],
+    "funnel": {
+      "awareness": {
+        "goal": "Reach eco-conscious males 25-34 across Instagram and TikTok and introduce the EcoWear brand through supply chain transparency content.",
+        "tactics": [
+          "TikTok supply chain documentary series \u2014 4 videos over 8 weeks",
+          "Instagram Reels myth-busting series targeting sustainable fashion keywords"
+        ],
+        "kpi": "Reach 500,000 unique users within the primary segment over 8 weeks"
+      },
+      "consideration": {
+        "goal": "Convert reached users into engaged followers and email subscribers who actively seek more information about EcoWear.",
+        "tactics": [
+          "Instagram carousel deep-dives on product sustainability credentials",
+          "Email capture via a free Sustainable Fashion Guide lead magnet"
+        ],
+        "kpi": "Achieve 2,500 new email subscribers and 1,000 new Instagram followers"
+      },
+      "conversion": {
+        "goal": "Drive first purchases from the most engaged segment of the awareness audience using a launch offer.",
+        "tactics": [
+          "Retargeting ads on Instagram for users who watched 75% of TikTok content",
+          "Email welcome sequence with a 15% first-purchase discount for new subscribers"
+        ],
+        "kpi": "Generate 150 first-time purchases at an average order value of $85"
+      }
+    },
+    "kpis": [
+      "500,000 unique reach within primary segment over 8 weeks",
+      "2,500 new email subscribers from lead magnet campaign",
+      "150 first-time purchases with average order value of $85",
+      "1,000 new Instagram followers from Reels campaign",
+      "Average TikTok video completion rate above 45%"
+    ],
+    "budget_allocation": {
+      "paid_ads": 45,
+      "content_creation": 25,
+      "influencer": 20,
+      "tools_and_software": 10
+    },
+    "tactical_plan": {
+      "platform_content": {
+        "Instagram": {
+          "format_recommendation": "reel",
+          "optimal_posting_time": "Tuesday\u2013Thursday, 7\u20139pm",
+          "posts": [
+            {
+              "variant": "A",
+              "caption": "Mock caption A for Instagram. Bold opening line that stops the scroll. This campaign is built for results. #MockCampaign #NexBrandAI",
+              "hashtags": [
+                "#MockCampaign",
+                "#NexBrandAI",
+                "#Marketing"
+              ],
+              "visual_direction": "Bright, high-contrast product shot with minimal text overlay. Person using the product in a real-life setting.",
+              "cta": "Tap the link in bio to learn more.",
+              "virality_score": 7.5,
+              "virality_reasoning": "Strong opening hook + clear CTA + relevant hashtags pushes score above average."
+            },
+            {
+              "variant": "B",
+              "caption": "Mock caption B \u2014 different angle. What if your biggest problem had a simple solution? We built it. #MockCampaign #NexBrandAI",
+              "hashtags": [
+                "#MockCampaign",
+                "#NexBrandAI",
+                "#Innovation"
+              ],
+              "visual_direction": "Before/after split screen. Left side shows the problem, right side shows the product solving it.",
+              "cta": "Comment YES if you want to know more.",
+              "virality_score": 8.1,
+              "virality_reasoning": "Question hook + emotional contrast + engagement-bait CTA earns high virality score."
+            }
+          ]
+        },
+        "Facebook": {
+          "format_recommendation": "carousel",
+          "optimal_posting_time": "Wednesday, 12\u20132pm",
+          "posts": [
+            {
+              "variant": "A",
+              "caption": "Mock Facebook caption A. Longer form, storytelling tone. Here is why this product changes everything for people like you. Share with someone who needs this.",
+              "hashtags": [
+                "#MockCampaign"
+              ],
+              "visual_direction": "3-slide carousel: slide 1 is problem statement, slide 2 is product feature, slide 3 is social proof quote.",
+              "cta": "Share this with a friend who needs it.",
+              "virality_score": 6.8,
+              "virality_reasoning": "Share-based CTA boosts social spread potential but no strong emotional hook in opening line."
+            },
+            {
+              "variant": "B",
+              "caption": "Mock Facebook caption B. Data-led angle. 9 out of 10 customers say this changed their routine. Here is what they found.",
+              "hashtags": [
+                "#MockCampaign"
+              ],
+              "visual_direction": "Static image with bold statistic overlay. Clean white background, brand colours.",
+              "cta": "Click to read the full story.",
+              "virality_score": 7.2,
+              "virality_reasoning": "Social proof data in opening sentence is a strong trust signal that improves click-through."
+            }
+          ]
+        }
+      },
+      "content_creation_checklist": [
+        "Film 2 reel variations for Instagram using the visual directions above",
+        "Prepare 3-slide carousel assets for Facebook",
+        "Write caption copy into scheduling tool before posting",
+        "Review all posts against brand tone guidelines before publishing"
+      ],
+      "campaign_hashtag_set": [
+        "#MockCampaign",
+        "#NexBrandAI",
+        "#Marketing",
+        "#Innovation",
+        "#ContentStrategy"
+      ],
+      "posting_frequency": {
+        "Instagram": 4,
+        "Facebook": 3
+      }
+    },
+    "influencer_strategy_note": "Use influencer 1 for reach and primary message delivery via a sponsored post, and influencer 2 for trust-building through a story feature the same week. Stagger posting by 2 days so each activation gets individual attention from the audience."
+  },
+  "calendar": {
+    "total_days": 30,
+    "start_date": "2025-02-01",
+    "days": [
+      {
+        "day": 1,
+        "date": "2025-02-01",
+        "phase": "Awareness",
+        "tasks": [
+          "Publish supply chain documentary part 1 on TikTok",
+          "Schedule Instagram Reels myth-busting post"
+        ],
+        "channel": "TikTok",
+        "owner": "Content Team"
+      },
+      {
+        "day": 2,
+        "date": "2025-02-02",
+        "phase": "Awareness",
+        "tasks": [
+          "Monitor TikTok engagement metrics",
+          "Respond to comments on day 1 post"
+        ],
+        "channel": "TikTok",
+        "owner": "Community Manager"
+      },
+      {
+        "day": 3,
+        "date": "2025-02-03",
+        "phase": "Awareness",
+        "tasks": [
+          "Publish Instagram carousel \u2014 true cost of one EcoWear t-shirt"
+        ],
+        "channel": "Instagram",
+        "owner": "Content Team"
+      },
+      {
+        "day": 4,
+        "date": "2025-02-04",
+        "phase": "Awareness",
+        "tasks": [
+          "Run paid Instagram Reels campaign \u2014 myth-busting creative",
+          "Set audience targeting: eco-conscious males 25-34 US"
+        ],
+        "channel": "Instagram",
+        "owner": "Paid Media Team"
+      },
+      {
+        "day": 5,
+        "date": "2025-02-05",
+        "phase": "Awareness",
+        "tasks": [
+          "Weekly performance review \u2014 reach and impressions vs KPI",
+          "Adjust TikTok ad spend based on day 1-4 data"
+        ],
+        "channel": "All Channels",
+        "owner": "Campaign Manager"
+      },
+      {
+        "day": 6,
+        "date": "2025-02-06",
+        "phase": "Awareness",
+        "tasks": [
+          "Publish supply chain documentary part 2 on TikTok \u2014 meet the farmer"
+        ],
+        "channel": "TikTok",
+        "owner": "Content Team"
+      },
+      {
+        "day": 7,
+        "date": "2025-02-07",
+        "phase": "Awareness",
+        "tasks": [
+          "Post Instagram Story \u2014 carbon calculation breakdown for bestselling hoodie"
+        ],
+        "channel": "Instagram",
+        "owner": "Content Team"
+      },
+      {
+        "day": 8,
+        "date": "2025-02-08",
+        "phase": "Awareness",
+        "tasks": [
+          "Launch greenwashing vs real sustainability Instagram carousel"
+        ],
+        "channel": "Instagram",
+        "owner": "Content Team"
+      },
+      {
+        "day": 9,
+        "date": "2025-02-09",
+        "phase": "Awareness",
+        "tasks": [
+          "Community engagement push \u2014 reply to all comments across TikTok and Instagram"
+        ],
+        "channel": "All Channels",
+        "owner": "Community Manager"
+      },
+      {
+        "day": 10,
+        "date": "2025-02-10",
+        "phase": "Awareness",
+        "tasks": [
+          "End-of-awareness-phase audit \u2014 reach, follower growth, video completion rates vs KPIs"
+        ],
+        "channel": "All Channels",
+        "owner": "Campaign Manager"
+      },
+      {
+        "day": 11,
+        "date": "2025-02-11",
+        "phase": "Consideration",
+        "tasks": [
+          "Launch lead magnet \u2014 Sustainable Fashion Guide email capture via Instagram bio link"
+        ],
+        "channel": "Instagram",
+        "owner": "Email Marketing Team"
+      },
+      {
+        "day": 12,
+        "date": "2025-02-12",
+        "phase": "Consideration",
+        "tasks": [
+          "Publish TikTok \u2014 what sustainable fashion brands won't show you"
+        ],
+        "channel": "TikTok",
+        "owner": "Content Team"
+      },
+      {
+        "day": 13,
+        "date": "2025-02-13",
+        "phase": "Consideration",
+        "tasks": [
+          "Send welcome email sequence part 1 to new subscribers"
+        ],
+        "channel": "Email",
+        "owner": "Email Marketing Team"
+      },
+      {
+        "day": 14,
+        "date": "2025-02-14",
+        "phase": "Consideration",
+        "tasks": [
+          "Weekly performance review \u2014 email subscribers vs 2500 KPI target",
+          "Optimize lead magnet ad creative if CTR below 2%"
+        ],
+        "channel": "All Channels",
+        "owner": "Campaign Manager"
+      },
+      {
+        "day": 15,
+        "date": "2025-02-15",
+        "phase": "Consideration",
+        "tasks": [
+          "Publish Instagram deep-dive carousel \u2014 sustainability credentials of the hoodie collection"
+        ],
+        "channel": "Instagram",
+        "owner": "Content Team"
+      },
+      {
+        "day": 16,
+        "date": "2025-02-16",
+        "phase": "Consideration",
+        "tasks": [
+          "Send welcome email sequence part 2 \u2014 brand story and supply chain transparency"
+        ],
+        "channel": "Email",
+        "owner": "Email Marketing Team"
+      },
+      {
+        "day": 17,
+        "date": "2025-02-17",
+        "phase": "Consideration",
+        "tasks": [
+          "Publish supply chain documentary part 3 on TikTok"
+        ],
+        "channel": "TikTok",
+        "owner": "Content Team"
+      },
+      {
+        "day": 18,
+        "date": "2025-02-18",
+        "phase": "Consideration",
+        "tasks": [
+          "Mid-campaign optimization review \u2014 reallocate budget from underperforming channel"
+        ],
+        "channel": "All Channels",
+        "owner": "Campaign Manager"
+      },
+      {
+        "day": 19,
+        "date": "2025-02-19",
+        "phase": "Consideration",
+        "tasks": [
+          "Publish customer story post \u2014 why I switched from Patagonia to EcoWear"
+        ],
+        "channel": "Instagram",
+        "owner": "Content Team"
+      },
+      {
+        "day": 20,
+        "date": "2025-02-20",
+        "phase": "Consideration",
+        "tasks": [
+          "End-of-consideration-phase audit \u2014 subscribers, engagement rate, email open rate vs KPIs"
+        ],
+        "channel": "All Channels",
+        "owner": "Campaign Manager"
+      },
+      {
+        "day": 21,
+        "date": "2025-02-21",
+        "phase": "Conversion",
+        "tasks": [
+          "Launch retargeting ads on Instagram for users who watched 75% of TikTok content"
+        ],
+        "channel": "Instagram",
+        "owner": "Paid Media Team"
+      },
+      {
+        "day": 22,
+        "date": "2025-02-22",
+        "phase": "Conversion",
+        "tasks": [
+          "Send conversion email \u2014 15% first-purchase discount to full subscriber list"
+        ],
+        "channel": "Email",
+        "owner": "Email Marketing Team"
+      },
+      {
+        "day": 23,
+        "date": "2025-02-23",
+        "phase": "Conversion",
+        "tasks": [
+          "Publish supply chain documentary part 4 \u2014 final episode with purchase CTA"
+        ],
+        "channel": "TikTok",
+        "owner": "Content Team"
+      },
+      {
+        "day": 24,
+        "date": "2025-02-24",
+        "phase": "Conversion",
+        "tasks": [
+          "Weekly performance review \u2014 purchases vs 150-unit KPI",
+          "Increase retargeting budget if ROAS above 3x"
+        ],
+        "channel": "All Channels",
+        "owner": "Campaign Manager"
+      },
+      {
+        "day": 25,
+        "date": "2025-02-25",
+        "phase": "Conversion",
+        "tasks": [
+          "Publish UGC-style Instagram Reel \u2014 5 ways to style the EcoWear hoodie"
+        ],
+        "channel": "Instagram",
+        "owner": "Content Team"
+      },
+      {
+        "day": 26,
+        "date": "2025-02-26",
+        "phase": "Conversion",
+        "tasks": [
+          "Send urgency email \u2014 48 hours left on first-purchase discount"
+        ],
+        "channel": "Email",
+        "owner": "Email Marketing Team"
+      },
+      {
+        "day": 27,
+        "date": "2025-02-27",
+        "phase": "Conversion",
+        "tasks": [
+          "Final retargeting push \u2014 increase frequency cap for warm audience segment"
+        ],
+        "channel": "Instagram",
+        "owner": "Paid Media Team"
+      },
+      {
+        "day": 28,
+        "date": "2025-02-28",
+        "phase": "Conversion",
+        "tasks": [
+          "Publish campaign wrap-up TikTok \u2014 results and community thank you"
+        ],
+        "channel": "TikTok",
+        "owner": "Content Team"
+      },
+      {
+        "day": 29,
+        "date": "2025-03-01",
+        "phase": "Conversion",
+        "tasks": [
+          "Final performance data pull \u2014 all channels"
+        ],
+        "channel": "All Channels",
+        "owner": "Campaign Manager"
+      },
+      {
+        "day": 30,
+        "date": "2025-03-02",
+        "phase": "Conversion",
+        "tasks": [
+          "Full campaign post-mortem report \u2014 ROI, KPI attainment, lessons learned, next campaign recommendations"
+        ],
+        "channel": "All Channels",
+        "owner": "Campaign Manager"
+      }
+    ]
+  },
+  "influencer_matches": [
+    {
+      "influencer_id": 1,
+      "fit_score": 8.7,
+      "fit_reasoning": "This influencer's niche aligns directly with BrewMate's target audience and their engagement rate of 6.2% is well above the 3% benchmark. Their primary platform matches the campaign's priority channel.",
+      "suggested_collaboration_type": "Sponsored Post",
+      "suggested_budget_usd": 650.0,
+      "outreach_message": "Hi! We're running a campaign for BrewMate and your content style is a perfect match for what we're building. We'd love to explore a sponsored post collaboration \u2014 would you be open to a quick chat this week?"
+    },
+    {
+      "influencer_id": 2,
+      "fit_score": 7.4,
+      "fit_reasoning": "Strong category alignment and audience location match the target market. Engagement rate of 4.1% is above benchmark and collaboration history suggests reliability.",
+      "suggested_collaboration_type": "Story Feature",
+      "suggested_budget_usd": 350.0,
+      "outreach_message": "Hey! We've been following your content and think you'd be a great fit for a BrewMate story feature. It's a low-commitment format that we think your audience would genuinely enjoy \u2014 interested?"
+    }
+  ],
+  "influencer_strategy_note": "Use influencer 1 for reach and primary message delivery via a sponsored post, and influencer 2 for trust-building through a story feature the same week. Stagger posting by 2 days so each activation gets individual attention from the audience.",
+  "influencer_stage_skipped": false
+}

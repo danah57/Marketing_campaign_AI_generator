@@ -1,0 +1,122 @@
+{
+  "job_id": "test-job-001",
+  "brand_name": "BrewMate",
+  "product_or_service": "Premium home coffee brewing kit with AI-guided brewing assistant app",
+  "industry": "Food & Beverage",
+  "sub_industry": "Specialty Coffee",
+  "target_market": "Young professionals aged 25-35 who work from home and want café-quality coffee without leaving the house",
+  "company_size": "Small",
+  "campaign_goal": "Awareness",
+  "campaign_goal_details": "Launch BrewMate in the Egyptian and Gulf markets, build brand recognition among remote workers and coffee enthusiasts, and drive app downloads",
+  "budget_amount": 5000,
+  "budget_currency": "USD",
+  "campaign_duration_weeks": 6,
+  "unique_selling_point": "The only home coffee kit that learns your taste preferences and adjusts brewing parameters automatically through an AI companion app",
+  "current_channels": ["Instagram", "TikTok", "Facebook"],
+  "has_previous_campaigns": false,
+  "previous_campaign_description": null,
+  "brand_tone": {
+    "tone_formality": 2,
+    "tone_playfulness": 4,
+    "tone_boldness": 4,
+    "preferred_vocabulary": ["craft", "ritual", "perfect cup", "barista-level", "effortless", "smart"],
+    "avoided_vocabulary": ["cheap", "discount", "basic", "ordinary", "budget"]
+  },
+  "competitors": [
+    {
+      "name": "Nespresso",
+      "strengths": ["strong brand recognition", "wide distribution", "fast brewing"],
+      "weaknesses": ["expensive pods", "no personalisation", "environmental concerns with single-use capsules"],
+      "platforms": ["Instagram", "Facebook", "YouTube"]
+    },
+    {
+      "name": "Keurig",
+      "strengths": ["convenience", "large product range", "US market dominance"],
+      "weaknesses": ["low-quality coffee perception", "plastic waste", "not aspirational"],
+      "platforms": ["Facebook", "Pinterest"]
+    },
+    {
+      "name": "Fellow",
+      "strengths": ["premium design", "coffee enthusiast community", "strong Instagram presence"],
+      "weaknesses": ["very high price point", "steep learning curve", "no AI or app integration"],
+      "platforms": ["Instagram", "YouTube"]
+    }
+  ],
+  "influencer_candidates": [
+    {
+      "id": 1,
+      "bio": "Coffee lover and work-from-home productivity coach. I share my daily rituals, home office setups, and everything that makes remote work enjoyable.",
+      "primaryPlatform": "Instagram",
+      "followersCount": "84000",
+      "engagementRate": "5.8",
+      "categories": ["Coffee", "Lifestyle", "Work From Home", "Productivity"],
+      "contentTypes": ["Reels", "Carousels", "Stories"],
+      "collaborationTypes": ["Sponsored Post", "Product Review", "Brand Ambassador"],
+      "audienceAgeRange": "25-34",
+      "audienceGender": "Mixed",
+      "audienceLocation": "Cairo, Egypt",
+      "interests": ["specialty coffee", "home office", "minimalism", "tech gadgets"],
+      "socialMediaLinks": {"instagram": "https://instagram.com/mock_brewlife"}
+    },
+    {
+      "id": 2,
+      "bio": "TikTok barista and coffee science nerd. I break down brewing techniques, review equipment, and make coffee culture accessible for everyone.",
+      "primaryPlatform": "TikTok",
+      "followersCount": "210000",
+      "engagementRate": "7.2",
+      "categories": ["Coffee", "Food & Beverage", "Education", "Lifestyle"],
+      "contentTypes": ["Short Videos", "Tutorials", "Reviews"],
+      "collaborationTypes": ["Sponsored Video", "Product Review", "Unboxing"],
+      "audienceAgeRange": "18-34",
+      "audienceGender": "Mixed",
+      "audienceLocation": "Dubai, UAE",
+      "interests": ["brewing equipment", "coffee chemistry", "food science", "gadgets"],
+      "socialMediaLinks": {"tiktok": "https://tiktok.com/@mock_coffeelab"}
+    },
+    {
+      "id": 3,
+      "bio": "Lifestyle and wellness content creator. Morning routines, healthy habits, and aesthetic home setups. Making everyday life a little more beautiful.",
+      "primaryPlatform": "Instagram",
+      "followersCount": "52000",
+      "engagementRate": "6.9",
+      "categories": ["Lifestyle", "Wellness", "Home Decor", "Morning Routine"],
+      "contentTypes": ["Reels", "Stories", "Static Posts"],
+      "collaborationTypes": ["Sponsored Post", "Story Feature", "Affiliate"],
+      "audienceAgeRange": "22-35",
+      "audienceGender": "Female-skewed",
+      "audienceLocation": "Riyadh, Saudi Arabia",
+      "interests": ["morning rituals", "home aesthetics", "wellness", "coffee"],
+      "socialMediaLinks": {"instagram": "https://instagram.com/mock_morningwithsarah"}
+    },
+    {
+      "id": 4,
+      "bio": "Tech reviewer and smart home enthusiast. I test the latest gadgets so you don't have to. Honest reviews, no fluff.",
+      "primaryPlatform": "YouTube",
+      "followersCount": "38000",
+      "engagementRate": "3.1",
+      "categories": ["Technology", "Smart Home", "Gadgets", "Reviews"],
+      "contentTypes": ["Long-form Video", "Reviews", "Comparison"],
+      "collaborationTypes": ["Sponsored Video", "Product Review"],
+      "audienceAgeRange": "28-45",
+      "audienceGender": "Male-skewed",
+      "audienceLocation": "Cairo, Egypt",
+      "interests": ["smart devices", "AI technology", "home automation", "coffee"],
+      "socialMediaLinks": {"youtube": "https://youtube.com/@mock_techwithhani"}
+    },
+    {
+      "id": 5,
+      "bio": "Food blogger and recipe developer. I create content around Middle Eastern cuisine, café culture, and everything delicious.",
+      "primaryPlatform": "Instagram",
+      "followersCount": "120000",
+      "engagementRate": "2.4",
+      "categories": ["Food", "Recipe", "Café Culture", "Middle Eastern Cuisine"],
+      "contentTypes": ["Carousels", "Reels", "Stories"],
+      "collaborationTypes": ["Sponsored Post", "Recipe Collab", "Brand Ambassador"],
+      "audienceAgeRange": "25-44",
+      "audienceGender": "Female-skewed",
+      "audienceLocation": "Kuwait",
+      "interests": ["cooking", "cafés", "food photography", "travel"],
+      "socialMediaLinks": {"instagram": "https://instagram.com/mock_flavorsofmena"}
+    }
+  ]
+}

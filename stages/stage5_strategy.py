@@ -1,19 +1,18 @@
 """Stage 5: Strategic Framework — messaging and channel strategy blueprint."""
 
-import json
+import logging
 
-from utils.llm_client import call_claude
+from utils.claude_client import call_claude
+from utils.llm_runtime import run_llm_stage
 
-USE_MOCK = True
-
-
-def run(brief: dict, context: dict, job_id: str) -> dict:
-    if USE_MOCK:
-        return _mock_output(brief, context)
-    return _real_output(brief, context)
+logger = logging.getLogger("campaign_model.llm")
 
 
-def _mock_output(brief: dict, context: dict) -> dict:
+def run(brief_dict: dict, context: dict, job_id: str) -> dict:
+    return run_llm_stage("Stage 5", _mock_output, _real_output, brief_dict, context, job_id)
+
+
+def _mock_output(brief_dict: dict, context: dict, job_id: str) -> dict:
     return {
         "campaign_summary": {
             "campaign_type": "Social Media",
@@ -107,62 +106,94 @@ def _mock_output(brief: dict, context: dict) -> dict:
             "Average TikTok video completion rate above 45%",
         ],
         "budget_allocation": {
-            "total": 15000,
-            "currency": "USD",
-            "breakdown": {
-                "Instagram": {"amount": 6000, "percentage": 40},
-                "TikTok": {"amount": 5250, "percentage": 35},
-                "Email Marketing": {"amount": 1500, "percentage": 10},
-                "Content Creation": {"amount": 2250, "percentage": 15},
-            },
+            "paid_ads": 45,
+            "content_creation": 25,
+            "influencer": 20,
+            "tools_and_software": 10,
         },
     }
 
 
-def _real_output(brief: dict, context: dict) -> dict:
-    primary = context.get("primary_segment", "")
-    segments = context.get("segments", [])
-    message_angle = ""
-    for s in segments:
-        if s.get("name") == primary:
-            message_angle = s.get("message_angle", "")
-            break
+def _real_output(brief_dict: dict, context: dict, job_id: str) -> dict:
+    brand_name = brief_dict["brand_name"]
+    campaign_goal = brief_dict["campaign_goal"]
+    budget_amount = brief_dict["budget_amount"]
+    budget_currency = brief_dict["budget_currency"]
+    campaign_duration_weeks = brief_dict["campaign_duration_weeks"]
+
+    business_summary = context.get("business_summary", "")
+    core_strengths = context.get("core_strengths") or []
+    tone_guidelines = context.get("tone_guidelines") or []
+    budget_tier = context.get("budget_tier", "")
+    budget_weekly = context.get("budget_weekly", 0.0)
+    recommended_focus = context.get("recommended_focus", "")
+
+    content_gaps = context.get("content_gaps") or []
+    positioning_opportunity = context.get("positioning_opportunity", "")
+    channels_to_prioritize = context.get("channels_to_prioritize") or []
+    competitor_weaknesses_to_exploit = context.get("competitor_weaknesses_to_exploit") or []
+
+    persona_name = context.get("persona_name", "")
+    pain_points = context.get("pain_points") or []
+    desires = context.get("desires") or []
+    messaging_hooks = context.get("messaging_hooks") or []
+    platform_behaviour = context.get("platform_behaviour") or {}
+    if not isinstance(platform_behaviour, dict):
+        platform_behaviour = {}
+
+    pat = platform_behaviour.get("most_active_times", "evenings")
+    pcc = platform_behaviour.get("content_consumption", "mixed")
 
     system_prompt = (
-        "You are a senior marketing strategist with 20 years of experience designing campaign strategies for consumer brands.\n"
-        "You produce full strategic blueprints that are specific, creative, and grounded in real audience and competitive intelligence.\n"
-        "You always respond in valid JSON only — no markdown, no explanation, no preamble.\n"
-        "Every element must directly reflect the brand, audience, competitive gaps, and business context provided.\n"
-        "Never produce generic strategies. Every hook, pillar, and tactic must feel purpose-built for this exact brand."
+        "You are a campaign strategist. Synthesize brand, competitive, and audience data into an "
+        "execution blueprint. Return ONLY a valid JSON object matching the requested schema. No markdown."
     )
 
-    user_prompt = (
-        "Design a full campaign strategy for this brand.\n\n"
-        f"Brand: {brief['brand_name']}\n"
-        f"Product: {brief['product_or_service']}\n"
-        f"Campaign Goal: {brief['campaign_goal']}\n"
-        f"Budget: {brief['budget_amount']} {brief['budget_currency']}\n"
-        f"Duration: {brief['campaign_duration_weeks']} weeks\n"
-        f"USP: {brief['unique_selling_point']}\n\n"
-        "Business Positioning:\n"
-        f"{context.get('brand_positioning', '')}\n\n"
-        "Primary Audience Segment:\n"
-        f"Name: {primary}\n"
-        f"Reason: {context.get('primary_segment_reason', '')}\n"
-        f"Message Angle: {message_angle}\n\n"
-        "Competitive Differentiation:\n"
-        f"{context.get('recommended_differentiation', '')}\n\n"
-        "Market Gaps to Target:\n"
-        f"{context.get('market_gaps', [])}\n\n"
-        "Instructions:\n"
-        "- Design a strategy that directly exploits the market gaps and differentiation identified above\n"
-        "- The campaign theme must feel creative and ownable — not a generic tagline\n"
-        "- Produce exactly 3 content pillars, each with 3 content examples\n"
-        f"- Budget allocation must sum exactly to {brief['budget_amount']} {brief['budget_currency']}\n"
-        "- All percentages in budget breakdown must sum to exactly 100\n"
-        "- Return valid JSON matching exactly the output structure specified"
-    )
+    user_prompt = f"""Create a full campaign strategy for {brand_name}.
+Goal: {campaign_goal}
+Duration: {campaign_duration_weeks} weeks
+Budget: {budget_amount} {budget_currency} ({budget_tier} tier, {budget_weekly}/week)
 
-    result = call_claude(system_prompt=system_prompt, user_prompt=user_prompt, temperature=0.7)
-    json.dumps(result)
-    return result
+Context:
+- Summary: {business_summary}
+- Strengths: {", ".join(str(s) for s in core_strengths)}
+- Focus: {recommended_focus}
+- Tone: {"; ".join(str(t) for t in tone_guidelines)}
+- Angle: {positioning_opportunity}
+- Gaps: {", ".join(str(g) for g in content_gaps)}
+- Channels: {", ".join(str(c) for c in channels_to_prioritize)}
+- Exploits: {", ".join(str(w) for w in competitor_weaknesses_to_exploit)}
+- Persona: {persona_name} (Pains: {", ".join(str(p) for p in pain_points)} | Desires: {", ".join(str(d) for d in desires)})
+- Hooks: {", ".join(str(h) for h in messaging_hooks)}
+- Activity: Active {pat}, consumes {pcc} content
+Return a JSON object with exactly these keys:
+{{
+  "campaign_summary": {{
+    "name": "Creative name",
+    "tagline": "One-line hook/tagline",
+    "duration_weeks": {campaign_duration_weeks},
+    "total_budget": {budget_amount}
+  }},
+  "positioning_statement": "For [persona] who [pain], [brand] offers [solution] unlike [competitors].",
+  "core_message": "Single most important message of the campaign",
+  "campaign_hooks": ["array of 3 distinct ad/post hooks"],
+  "content_pillars": [
+    {{"pillar": "Name", "description": "Core themes", "share_percentage": 0}}
+  ],
+  "funnel": {{
+    "awareness": ["2-3 specific top-of-funnel tactics/content mechanics"],
+    "consideration": ["2-3 middle-of-funnel nurture tactics"],
+    "conversion": ["2-3 conversion/offer tactics"]
+  }},
+  "kpis": [
+    {{"metric": "e.g., Conversion Rate", "target": "e.g., 2.5%", "source": "e.g., Shopify Analytics"}}
+  ],
+  "budget_allocation_percentage": {{
+    "paid_ads": 0,
+    "content_creation": 0,
+    "influencer": 0,
+    "tools_and_software": 0
+  }}
+}}"""
+
+    return call_claude(system_prompt, user_prompt, max_tokens=1500)

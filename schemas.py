@@ -10,18 +10,19 @@ class Competitor(BaseModel):
 
 
 IndustryLiteral = Literal[
-    "E-commerce",
-    "F&B",
-    "Fashion",
-    "Technology",
-    "Health & Wellness",
-    "Education",
-    "Real Estate",
-    "Finance",
-    "Travel",
-    "Beauty",
-    "Sports",
-    "Other",
+    'E-commerce & Retail',
+    'Fashion & Beauty',
+    'Food & Beverage',
+    'Media & Content Creation',
+    'Fitness & Wellness',
+    'Home & Local Services',
+    'Education & Coaching',
+    'Travel & Hospitality',
+    'Real Estate',
+    'Healthcare & Wellness',
+    'Finance & Business',
+    'Technology & Apps',
+    'Other',
 ]
 
 CompanySizeLiteral = Literal["Solo", "Small", "Mid-size", "Enterprise"]
@@ -32,11 +33,42 @@ ChannelLiteral = Literal[
     "TikTok",
     "YouTube",
     "Facebook",
-    "Google Ads",
-    "Email",
     "Website",
     "None",
 ]
+
+
+class BrandToneProfile(BaseModel):
+    tone_formality: int = Field(ge=1, le=5, description="1=very casual, 5=very formal")
+    tone_playfulness: int = Field(ge=1, le=5, description="1=serious, 5=very playful")
+    tone_boldness: int = Field(ge=1, le=5, description="1=subtle, 5=very bold")
+    preferred_vocabulary: list[str] | None = None
+    avoided_vocabulary: list[str] | None = None
+
+
+class InfluencerProfile(BaseModel):
+    id: int
+    bio: str | None = None
+    primaryPlatform: str | None = None
+    followersCount: str | None = None
+    engagementRate: str | None = None
+    categories: list[str] | None = None
+    contentTypes: list[str] | None = None
+    collaborationTypes: list[str] | None = None
+    audienceAgeRange: str | None = None
+    audienceGender: str | None = None
+    audienceLocation: str | None = None
+    interests: list[str] | None = None
+    socialMediaLinks: dict | None = None
+
+
+class InfluencerMatch(BaseModel):
+    influencer_id: int
+    fit_score: float
+    fit_reasoning: str
+    suggested_collaboration_type: str
+    suggested_budget_usd: float
+    outreach_message: str
 
 
 class CampaignBrief(BaseModel):
@@ -53,12 +85,24 @@ class CampaignBrief(BaseModel):
     budget_currency: CurrencyLiteral
     campaign_duration_weeks: int = Field(ge=1, le=52)
     unique_selling_point: str
-    current_channels: list[ChannelLiteral] = Field(min_length=1)
+    current_channels: list[ChannelLiteral] = Field(default_factory=list)
     competitors: list[Competitor] | None = Field(default_factory=list)
     has_previous_campaigns: bool
     previous_campaign_description: str | None = None
+    brand_tone: BrandToneProfile | None = None
+    start_date: str | None = None
 
 
 class GenerateResponse(BaseModel):
     strategy: dict
     calendar: dict
+    influencer_matches: list[InfluencerMatch] | None = Field(default_factory=list)
+    influencer_strategy_note: str | None = None
+    influencer_stage_skipped: bool = True
+
+
+class StageCheckpointResponse(BaseModel):
+    job_id: str
+    stage: str | int
+    status: str  # "complete" | "cached" | "failed"
+    output: dict

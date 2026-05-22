@@ -1,0 +1,548 @@
+[
+  {
+    "id": 1,
+    "primaryPlatform": "YouTube",
+    "followersCount": 185000.0,
+    "engagementRate": 6.4,
+    "categories": [
+      "Technology",
+      "Productivity"
+    ],
+    "contentTypes": [
+      "video",
+      "reel",
+      "post"
+    ],
+    "collaborationTypes": [
+      "sponsored_post",
+      "product_review",
+      "affiliate"
+    ],
+    "audienceAgeRange": "18-34",
+    "audienceGender": "all",
+    "audienceLocation": "US, Canada, UK",
+    "interests": [
+      "apps",
+      "gadgets",
+      "career"
+    ]
+  },
+  {
+    "id": 2,
+    "primaryPlatform": "Instagram",
+    "followersCount": 132000.0,
+    "engagementRate": 5.8,
+    "categories": [
+      "Fitness",
+      "Health"
+    ],
+    "contentTypes": [
+      "reel",
+      "story",
+      "post"
+    ],
+    "collaborationTypes": [
+      "sponsored_post",
+      "brand_ambassador"
+    ],
+    "audienceAgeRange": "18-30",
+    "audienceGender": "all",
+    "audienceLocation": "US",
+    "interests": [
+      "workouts",
+      "nutrition",
+      "wellness"
+    ]
+  },
+  {
+    "id": 3,
+    "primaryPlatform": "TikTok",
+    "followersCount": 248000.0,
+    "engagementRate": 7.1,
+    "categories": [
+      "Beauty",
+      "Lifestyle"
+    ],
+    "contentTypes": [
+      "video",
+      "reel",
+      "live"
+    ],
+    "collaborationTypes": [
+      "product_review",
+      "tutorial",
+      "sponsored_post"
+    ],
+    "audienceAgeRange": "18-29",
+    "audienceGender": "female",
+    "audienceLocation": "US, Mexico",
+    "interests": [
+      "makeup",
+      "skincare",
+      "fashion"
+    ]
+  },
+  {
+    "id": 4,
+    "primaryPlatform": "YouTube",
+    "followersCount": 176500.0,
+    "engagementRate": 6.0,
+    "categories": [
+      "Travel",
+      "Lifestyle"
+    ],
+    "contentTypes": [
+      "video",
+      "post",
+      "story"
+    ],
+    "collaborationTypes": [
+      "destination_campaign",
+      "sponsored_post"
+    ],
+    "audienceAgeRange": "20-38",
+    "audienceGender": "all",
+    "audienceLocation": "Canada, US, Europe",
+    "interests": [
+      "travel",
+      "nature",
+      "photography"
+    ]
+  },
+  {
+    "id": 5,
+    "primaryPlatform": "Instagram",
+    "followersCount": 98000.0,
+    "engagementRate": 5.2,
+    "categories": [
+      "Food",
+      "Lifestyle"
+    ],
+    "contentTypes": [
+      "reel",
+      "story",
+      "post"
+    ],
+    "collaborationTypes": [
+      "restaurant_review",
+      "sponsored_post"
+    ],
+    "audienceAgeRange": "18-35",
+    "audienceGender": "all",
+    "audienceLocation": "GCC region",
+    "interests": [
+      "recipes",
+      "cafes",
+      "travel"
+    ]
+  },
+  {
+    "id": 6,
+    "primaryPlatform": "YouTube",
+    "followersCount": 301000.0,
+    "engagementRate": 8.3,
+    "categories": [
+      "Gaming",
+      "Technology"
+    ],
+    "contentTypes": [
+      "live",
+      "video",
+      "short"
+    ],
+    "collaborationTypes": [
+      "sponsored_stream",
+      "product_review"
+    ],
+    "audienceAgeRange": "16-30",
+    "audienceGender": "male",
+    "audienceLocation": "UK, Europe",
+    "interests": [
+      "esports",
+      "pc build",
+      "streaming"
+    ]
+  },
+  {
+    "id": 7,
+    "primaryPlatform": "Instagram",
+    "followersCount": 143000.0,
+    "engagementRate": 6.9,
+    "categories": [
+      "Fashion",
+      "Lifestyle"
+    ],
+    "contentTypes": [
+      "reel",
+      "post",
+      "story"
+    ],
+    "collaborationTypes": [
+      "sponsored_post",
+      "lookbook"
+    ],
+    "audienceAgeRange": "18-34",
+    "audienceGender": "female",
+    "audienceLocation": "MENA",
+    "interests": [
+      "style",
+      "beauty",
+      "shopping"
+    ]
+  },
+  {
+    "id": 8,
+    "primaryPlatform": "TikTok",
+    "followersCount": 211000.0,
+    "engagementRate": 7.7,
+    "categories": [
+      "Business",
+      "Education"
+    ],
+    "contentTypes": [
+      "video",
+      "carousel",
+      "post"
+    ],
+    "collaborationTypes": [
+      "sponsored_post",
+      "webinar",
+      "affiliate"
+    ],
+    "audienceAgeRange": "20-40",
+    "audienceGender": "all",
+    "audienceLocation": "US",
+    "interests": [
+      "investing",
+      "budgeting",
+      "career"
+    ]
+  },
+  {
+    "id": 9,
+    "primaryPlatform": "Instagram",
+    "followersCount": 119000.0,
+    "engagementRate": 5.6,
+    "categories": [
+      "Lifestyle",
+      "Home"
+    ],
+    "contentTypes": [
+      "reel",
+      "post",
+      "story"
+    ],
+    "collaborationTypes": [
+      "sponsored_post",
+      "product_review"
+    ],
+    "audienceAgeRange": "24-44",
+    "audienceGender": "female",
+    "audienceLocation": "US, Canada",
+    "interests": [
+      "decor",
+      "organization",
+      "diy"
+    ]
+  },
+  {
+    "id": 10,
+    "primaryPlatform": "YouTube",
+    "followersCount": 264000.0,
+    "engagementRate": 6.7,
+    "categories": [
+      "Automotive",
+      "Technology"
+    ],
+    "contentTypes": [
+      "video",
+      "short",
+      "story"
+    ],
+    "collaborationTypes": [
+      "product_review",
+      "test_drive_campaign"
+    ],
+    "audienceAgeRange": "18-39",
+    "audienceGender": "male",
+    "audienceLocation": "GCC region",
+    "interests": [
+      "cars",
+      "travel",
+      "gadgets"
+    ]
+  },
+  {
+    "id": 11,
+    "primaryPlatform": "Instagram",
+    "followersCount": 87000.0,
+    "engagementRate": 4.8,
+    "categories": [
+      "Parenting",
+      "Lifestyle"
+    ],
+    "contentTypes": [
+      "post",
+      "story",
+      "reel"
+    ],
+    "collaborationTypes": [
+      "sponsored_post",
+      "brand_ambassador"
+    ],
+    "audienceAgeRange": "25-44",
+    "audienceGender": "female",
+    "audienceLocation": "MENA",
+    "interests": [
+      "family",
+      "education",
+      "wellness"
+    ]
+  },
+  {
+    "id": 12,
+    "primaryPlatform": "Instagram",
+    "followersCount": 154000.0,
+    "engagementRate": 6.2,
+    "categories": [
+      "Photography",
+      "Travel"
+    ],
+    "contentTypes": [
+      "post",
+      "reel",
+      "video"
+    ],
+    "collaborationTypes": [
+      "sponsored_post",
+      "product_review"
+    ],
+    "audienceAgeRange": "18-35",
+    "audienceGender": "all",
+    "audienceLocation": "Australia, Asia",
+    "interests": [
+      "cameras",
+      "editing",
+      "travel"
+    ]
+  },
+  {
+    "id": 13,
+    "primaryPlatform": "TikTok",
+    "followersCount": 126000.0,
+    "engagementRate": 6.5,
+    "categories": [
+      "Health",
+      "Lifestyle"
+    ],
+    "contentTypes": [
+      "video",
+      "story",
+      "post"
+    ],
+    "collaborationTypes": [
+      "sponsored_post",
+      "affiliate"
+    ],
+    "audienceAgeRange": "18-34",
+    "audienceGender": "all",
+    "audienceLocation": "MENA",
+    "interests": [
+      "mindfulness",
+      "sleep",
+      "nutrition"
+    ]
+  },
+  {
+    "id": 14,
+    "primaryPlatform": "YouTube",
+    "followersCount": 207000.0,
+    "engagementRate": 7.3,
+    "categories": [
+      "Music",
+      "Education"
+    ],
+    "contentTypes": [
+      "video",
+      "short",
+      "live"
+    ],
+    "collaborationTypes": [
+      "product_review",
+      "sponsored_post"
+    ],
+    "audienceAgeRange": "17-33",
+    "audienceGender": "all",
+    "audienceLocation": "North America",
+    "interests": [
+      "music production",
+      "audio gear",
+      "creativity"
+    ]
+  },
+  {
+    "id": 15,
+    "primaryPlatform": "TikTok",
+    "followersCount": 94000.0,
+    "engagementRate": 5.9,
+    "categories": [
+      "Education",
+      "Lifestyle"
+    ],
+    "contentTypes": [
+      "video",
+      "post",
+      "story"
+    ],
+    "collaborationTypes": [
+      "sponsored_post",
+      "affiliate"
+    ],
+    "audienceAgeRange": "16-30",
+    "audienceGender": "female",
+    "audienceLocation": "MENA, Europe",
+    "interests": [
+      "books",
+      "writing",
+      "culture"
+    ]
+  },
+  {
+    "id": 16,
+    "primaryPlatform": "Instagram",
+    "followersCount": 136000.0,
+    "engagementRate": 6.1,
+    "categories": [
+      "Food",
+      "Education"
+    ],
+    "contentTypes": [
+      "reel",
+      "video",
+      "story"
+    ],
+    "collaborationTypes": [
+      "sponsored_post",
+      "product_review"
+    ],
+    "audienceAgeRange": "20-40",
+    "audienceGender": "all",
+    "audienceLocation": "Europe",
+    "interests": [
+      "recipes",
+      "nutrition",
+      "kitchen"
+    ]
+  },
+  {
+    "id": 17,
+    "primaryPlatform": "Instagram",
+    "followersCount": 112000.0,
+    "engagementRate": 5.5,
+    "categories": [
+      "Sustainability",
+      "Lifestyle"
+    ],
+    "contentTypes": [
+      "post",
+      "reel",
+      "story"
+    ],
+    "collaborationTypes": [
+      "brand_ambassador",
+      "sponsored_post"
+    ],
+    "audienceAgeRange": "20-39",
+    "audienceGender": "all",
+    "audienceLocation": "Europe, US",
+    "interests": [
+      "eco living",
+      "home",
+      "shopping"
+    ]
+  },
+  {
+    "id": 18,
+    "primaryPlatform": "LinkedIn",
+    "followersCount": 173000.0,
+    "engagementRate": 6.6,
+    "categories": [
+      "Business",
+      "Technology"
+    ],
+    "contentTypes": [
+      "post",
+      "video",
+      "live"
+    ],
+    "collaborationTypes": [
+      "webinar",
+      "sponsored_post",
+      "affiliate"
+    ],
+    "audienceAgeRange": "22-45",
+    "audienceGender": "all",
+    "audienceLocation": "Asia, MENA",
+    "interests": [
+      "startups",
+      "leadership",
+      "product"
+    ]
+  },
+  {
+    "id": 20,
+    "primaryPlatform": "linkedin",
+    "followersCount": 0.0,
+    "engagementRate": 3.3,
+    "categories": [
+      "Art",
+      "Beauty"
+    ],
+    "contentTypes": [
+      "article",
+      "post"
+    ],
+    "collaborationTypes": [
+      "affiliate",
+      "brand_ambassador",
+      "tutorial"
+    ],
+    "audienceAgeRange": "18-24",
+    "audienceGender": "all",
+    "audienceLocation": "North America",
+    "interests": [
+      "decor",
+      "programming",
+      "beauty",
+      "outdoors"
+    ]
+  },
+  {
+    "id": 21,
+    "primaryPlatform": "linkedin",
+    "followersCount": 0.0,
+    "engagementRate": 3.9,
+    "categories": [
+      "Art",
+      "Lifestyle"
+    ],
+    "contentTypes": [
+      "post",
+      "article"
+    ],
+    "collaborationTypes": [
+      "event_appearance",
+      "sponsored_post",
+      "product_review"
+    ],
+    "audienceAgeRange": "18-34",
+    "audienceGender": "all",
+    "audienceLocation": "North America",
+    "interests": [
+      "programming",
+      "style",
+      "technology",
+      "cooking"
+    ]
+  }
+]

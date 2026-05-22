@@ -1,108 +1,95 @@
 """Stage 4: Audience Analysis — segment definition and prioritization."""
 
-import json
+import logging
 
-from utils.llm_client import call_claude
+from utils.claude_client import call_claude
+from utils.llm_runtime import run_llm_stage
 
-USE_MOCK = True
-
-
-def run(brief: dict, context: dict, job_id: str) -> dict:
-    if USE_MOCK:
-        return _mock_output(brief, context)
-    return _real_output(brief, context)
+logger = logging.getLogger("campaign_model.llm")
 
 
-def _mock_output(brief: dict, context: dict) -> dict:
+def run(brief_dict: dict, context: dict, job_id: str) -> dict:
+    return run_llm_stage("Stage 4", _mock_output, _real_output, brief_dict, context, job_id)
+
+
+def _mock_output(brief_dict: dict, context: dict, job_id: str) -> dict:
+    brand = brief_dict.get("brand_name", "the brand")
     return {
-        "segments": [
-            {
-                "name": "Conscious Millennial Males",
-                "demographics": "Males aged 25-34, urban US cities, mid-income $45K-$75K, college-educated professionals.",
-                "psychographics": "Value environmental responsibility and personal integrity, follow sustainability content online, make deliberate purchase decisions based on brand ethics.",
-                "pain_points": [
-                    "Most sustainable fashion brands ignore them entirely or feel too feminine in aesthetic.",
-                    "They distrust greenwashing claims and have no easy way to verify a brand's actual sustainability.",
-                    "Premium sustainable options like Patagonia are out of their everyday fashion budget range.",
-                ],
-                "preferred_channels": ["Instagram", "TikTok"],
-                "message_angle": "Finally a sustainable clothing brand built for men who care — with the proof to back it up.",
-            },
-            {
-                "name": "Eco-Conscious Millennial Women",
-                "demographics": "Females aged 25-35, US suburban and urban, mid-income $40K-$70K, lifestyle and wellness oriented.",
-                "psychographics": "Actively reduce environmental footprint across food, transport, and fashion, follow slow fashion creators, share values-aligned brands with their networks.",
-                "pain_points": [
-                    "Reformation and similar brands feel aspirational but not affordable for everyday wardrobe building.",
-                    "Fast fashion sustainability lines feel dishonest and make it harder to identify brands they can actually trust.",
-                    "They want to advocate for brands they believe in but need compelling content to share with their communities.",
-                ],
-                "preferred_channels": ["Instagram", "Email"],
-                "message_angle": "Sustainable fashion that fits your everyday life and your values — at a price that makes sense.",
-            },
-            {
-                "name": "Gen Z First-Time Sustainables",
-                "demographics": "Males and females aged 18-24, US college towns and cities, lower income $20K-$40K, digitally native.",
-                "psychographics": "Climate anxiety is a daily reality, actively seek brands that align with their identity, highly influenced by creators and peer recommendations on TikTok.",
-                "pain_points": [
-                    "Budget constraints make sustainable fashion feel like a luxury they cannot justify yet.",
-                    "Overwhelmed by the number of brands claiming sustainability with no clear way to compare them.",
-                    "Want to participate in sustainable fashion culture but lack entry-level options with strong brand identity.",
-                ],
-                "preferred_channels": ["TikTok", "Instagram"],
-                "message_angle": "Your first sustainable wardrobe staple — real impact, real price, real proof.",
-            },
+        "persona_name": "Rami El-Khatib",
+        "age_range": "25-34",
+        "gender_skew": "balanced",
+        "occupation": "Remote product designer juggling deadlines and home café rituals",
+        "pain_points": [
+            "Inconsistent brew quality between mornings",
+            "Overwhelming gadget choices with no guided learning path",
+            "Wants premium taste without café commute time",
         ],
-        "primary_segment": "Conscious Millennial Males",
-        "primary_segment_reason": (
-            "This segment is the largest underserved gap in the sustainable fashion market, directly validated by the competitor analysis, "
-            "and aligns with EcoWear's USP of accessible pricing and transparency — making it the highest-return focus for a $15,000 awareness campaign."
-        ),
+        "desires": [
+            "A confident morning ritual that feels premium",
+            "Proof the AI actually adapts to his taste",
+            "Shareable moments for Instagram stories",
+        ],
+        "content_preferences": ["Reels", "Carousels", "Behind-the-scenes"],
+        "platform_behaviour": {
+            "most_active_times": "Weekday mornings 7:30–9:00am, evenings 8–10pm",
+            "content_consumption": "mixed",
+            "engagement_style": "active",
+        },
+        "buying_triggers": ["Peer creator endorsement", "Visible taste improvement in 7 days", "Bundle with app onboarding"],
+        "messaging_hooks": [
+            f"{brand} learns how strong you like it—then keeps the bar high",
+            "Café clarity without the commute",
+            "Dial in once; sip smarter every day",
+        ],
+        "primary_segment": "Remote professionals 25-35",
+        "primary_segment_reason": "Matches brief target market and priority channels for awareness.",
     }
 
 
-def _real_output(brief: dict, context: dict) -> dict:
-    s2 = context.get("stage2") or {}
-    s3 = context.get("stage3") or {}
-    positioning = context.get("brand_positioning") or s2.get("brand_positioning", "")
-    growth_ops = context.get("growth_opportunities") or s2.get("growth_opportunities", [])
-    market_gaps = context.get("market_gaps") or s3.get("market_gaps", [])
-    differentiation = context.get("recommended_differentiation") or s3.get("recommended_differentiation", "")
+def _real_output(brief_dict: dict, context: dict, job_id: str) -> dict:
+    brand_name = brief_dict["brand_name"]
+    target_market = brief_dict["target_market"]
+    industry = brief_dict["industry"]
+    campaign_goal = brief_dict["campaign_goal"]
+    product_or_service = brief_dict["product_or_service"]
+
+    positioning_opportunity = context.get("positioning_opportunity", "")
+    channels_to_prioritize = context.get("channels_to_prioritize") or []
+    tone_descriptor = context.get("tone_descriptor", "")
+
+    channels_joined = ", ".join(channels_to_prioritize) if channels_to_prioritize else "Not yet determined"
 
     system_prompt = (
-        "You are a senior audience strategist specializing in consumer segmentation.\n"
-        "You produce precise, actionable persona cards grounded in real consumer behavior.\n"
-        "You always respond in valid JSON only — no markdown, no explanation, no preamble.\n"
-        "Every insight must be specific to the brand, market, and competitive context provided.\n"
-        "Never produce generic demographic buckets — each segment must feel like a real person with real motivations."
+        "You are an audience research specialist for NexBrand AI.\n"
+        "You build detailed audience personas to guide campaign targeting.\n"
+        "Always respond with valid JSON only. No markdown. No explanation outside JSON."
     )
 
-    user_prompt = (
-        "Produce full audience persona cards for this brand's campaign.\n\n"
-        f"Brand: {brief['brand_name']}\n"
-        f"Product: {brief['product_or_service']}\n"
-        f"Industry: {brief['industry']}\n"
-        f"Market: {brief['target_market']}\n"
-        f"Campaign Goal: {brief['campaign_goal']}\n"
-        f"USP: {brief['unique_selling_point']}\n\n"
-        "Business Analysis:\n"
-        f"Positioning: {positioning}\n"
-        f"Growth Opportunities: {growth_ops}\n\n"
-        "Competitive Intelligence:\n"
-        f"Market Gaps: {market_gaps}\n"
-        f"Recommended Differentiation: {differentiation}\n\n"
-        "Instructions:\n"
-        "- Produce exactly 3 audience segments\n"
-        "- Each segment must have: name, demographics, psychographics, pain_points (3 items), preferred_channels, message_angle\n"
-        "- Identify one primary_segment and explain in one sentence why it gives the best return for this campaign goal and budget\n"
-        "- Return valid JSON matching exactly this structure:\n"
-        "{\n"
-        '  "segments": [...],\n'
-        '  "primary_segment": "...",\n'
-        '  "primary_segment_reason": "..."\n'
-        "}"
-    )
+    user_prompt = f"""Build an audience persona for this campaign.
 
-    result = call_claude(system_prompt=system_prompt, user_prompt=user_prompt, temperature=0.7)
-    json.dumps(result)
-    return result
+Brand: {brand_name} ({industry})
+Product/Service: {product_or_service}
+Target Market: {target_market}
+Campaign Goal: {campaign_goal}
+Positioning Opportunity: {positioning_opportunity}
+Channels: {channels_joined}
+Voice: {tone_descriptor}
+
+Return a JSON object with exactly these keys:
+{{
+  "persona_name": "Representative name",
+  "demographics": "Age, occupation, or lifestyle summary",
+  "pain_points": ["array of 3 core problems"],
+  "desires": ["array of 3 ultimate goals"],
+  "buying_barriers": ["array of 2 main objections or hesitations"],
+  "content_preferences": ["array of 2 preferred formats"],
+  "platform_behaviour": {{
+    "active_times": "e.g., evenings 8-10pm",
+    "consumption": "short-form|long-form|mixed",
+    "engagement": "passive|active|creator"
+  }},
+  "buying_triggers": ["array of 2 conversion triggers"],
+  "messaging_hooks": ["array of 3 distinct angles to grab attention"]
+}}"""
+
+    return call_claude(system_prompt, user_prompt, max_tokens=750)

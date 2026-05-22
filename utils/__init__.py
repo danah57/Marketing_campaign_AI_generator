@@ -1,1 +1,1 @@
-"""Shared utilities package."""
+"""Shared utilities."""

@@ -1,0 +1,97 @@
+{
+  "job_id": "test-job-no-influencers",
+  "brand_name": "BrewMate",
+  "product_or_service": "Premium home coffee brewing kit with AI-guided brewing assistant app",
+  "industry": "Food & Beverage",
+  "sub_industry": "Specialty Coffee",
+  "target_market": "Young professionals aged 25-35 who work from home and want caf\u00c3\u00a9-quality coffee without leaving the house",
+  "company_size": "Small",
+  "campaign_goal": "Awareness",
+  "campaign_goal_details": "Launch BrewMate in the Egyptian and Gulf markets, build brand recognition among remote workers and coffee enthusiasts, and drive app downloads",
+  "budget_amount": 5000,
+  "budget_currency": "USD",
+  "campaign_duration_weeks": 6,
+  "unique_selling_point": "The only home coffee kit that learns your taste preferences and adjusts brewing parameters automatically through an AI companion app",
+  "current_channels": [
+    "Instagram",
+    "TikTok",
+    "Facebook"
+  ],
+  "has_previous_campaigns": false,
+  "previous_campaign_description": null,
+  "brand_tone": {
+    "tone_formality": 2,
+    "tone_playfulness": 4,
+    "tone_boldness": 4,
+    "preferred_vocabulary": [
+      "craft",
+      "ritual",
+      "perfect cup",
+      "barista-level",
+      "effortless",
+      "smart"
+    ],
+    "avoided_vocabulary": [
+      "cheap",
+      "discount",
+      "basic",
+      "ordinary",
+      "budget"
+    ]
+  },
+  "competitors": [
+    {
+      "name": "Nespresso",
+      "strengths": [
+        "strong brand recognition",
+        "wide distribution",
+        "fast brewing"
+      ],
+      "weaknesses": [
+        "expensive pods",
+        "no personalisation",
+        "environmental concerns with single-use capsules"
+      ],
+      "platforms": [
+        "Instagram",
+        "Facebook",
+        "YouTube"
+      ]
+    },
+    {
+      "name": "Keurig",
+      "strengths": [
+        "convenience",
+        "large product range",
+        "US market dominance"
+      ],
+      "weaknesses": [
+        "low-quality coffee perception",
+        "plastic waste",
+        "not aspirational"
+      ],
+      "platforms": [
+        "Facebook",
+        "Pinterest"
+      ]
+    },
+    {
+      "name": "Fellow",
+      "strengths": [
+        "premium design",
+        "coffee enthusiast community",
+        "strong Instagram presence"
+      ],
+      "weaknesses": [
+        "very high price point",
+        "steep learning curve",
+        "no AI or app integration"
+      ],
+      "platforms": [
+        "Instagram",
+        "YouTube"
+      ]
+    }
+  ],
+  "influencer_candidates": []
+}

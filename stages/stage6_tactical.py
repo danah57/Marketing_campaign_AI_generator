@@ -1,129 +1,207 @@
 """Stage 6: Tactical Planning — execution-level content and channel actions."""
 
 import json
+import logging
 
-from utils.llm_client import call_claude
+from utils.claude_client import call_claude
+from utils.llm_runtime import run_llm_stage
 
-USE_MOCK = True
-
-
-def run(brief: dict, context: dict, job_id: str) -> dict:
-    if USE_MOCK:
-        return _mock_output(brief, context)
-    return _real_output(brief, context)
+logger = logging.getLogger("campaign_model.llm")
 
 
-def _mock_output(brief: dict, context: dict) -> dict:
+def run(brief_dict: dict, context: dict, job_id: str) -> dict:
+    return run_llm_stage("Stage 6", _mock_output, _real_output, brief_dict, context, job_id)
+
+
+def _mock_output(brief_dict: dict, context: dict, job_id: str) -> dict:
     return {
-        "ad_copy_examples": [
-            {
-                "channel": "TikTok",
-                "format": "60-second documentary video",
-                "headline": "We filmed our entire supply chain. Here is what we found.",
-                "body": "Most brands tell you they are sustainable. We decided to show you instead. From the organic cotton farm in Texas to the carbon-neutral factory in Portugal — every step, on camera, no edits.",
-                "cta": "Follow to see the full series",
+        "platform_content": {
+            "Instagram": {
+                "format_recommendation": "reel",
+                "optimal_posting_time": "Tuesday–Thursday, 7–9pm",
+                "posts": [
+                    {
+                        "variant": "A",
+                        "caption": (
+                            "Mock caption A for Instagram. Bold opening line that stops the scroll. "
+                            "This campaign is built for results. #MockCampaign #NexBrandAI"
+                        ),
+                        "hashtags": ["#MockCampaign", "#NexBrandAI", "#Marketing"],
+                        "visual_direction": (
+                            "Bright, high-contrast product shot with minimal text overlay. "
+                            "Person using the product in a real-life setting."
+                        ),
+                        "cta": "Tap the link in bio to learn more.",
+                        "virality_score": 7.5,
+                        "virality_reasoning": (
+                            "Strong opening hook + clear CTA + relevant hashtags pushes score above average."
+                        ),
+                    },
+                    {
+                        "variant": "B",
+                        "caption": (
+                            "Mock caption B — different angle. What if your biggest problem had a simple solution? "
+                            "We built it. #MockCampaign #NexBrandAI"
+                        ),
+                        "hashtags": ["#MockCampaign", "#NexBrandAI", "#Innovation"],
+                        "visual_direction": (
+                            "Before/after split screen. Left side shows the problem, right side shows the product solving it."
+                        ),
+                        "cta": "Comment YES if you want to know more.",
+                        "virality_score": 8.1,
+                        "virality_reasoning": (
+                            "Question hook + emotional contrast + engagement-bait CTA earns high virality score."
+                        ),
+                    },
+                ],
             },
-            {
-                "channel": "Instagram",
-                "format": "Carousel — 6 slides",
-                "headline": "The true cost of making one EcoWear t-shirt",
-                "body": "Slide 1: The cotton. Slide 2: The farmer. Slide 3: The factory. Slide 4: The shipping. Slide 5: The carbon offset. Slide 6: The price you pay. Nothing hidden.",
-                "cta": "Swipe to see where your money actually goes",
+            "Facebook": {
+                "format_recommendation": "carousel",
+                "optimal_posting_time": "Wednesday, 12–2pm",
+                "posts": [
+                    {
+                        "variant": "A",
+                        "caption": (
+                            "Mock Facebook caption A. Longer form, storytelling tone. "
+                            "Here is why this product changes everything for people like you. Share with someone who needs this."
+                        ),
+                        "hashtags": ["#MockCampaign"],
+                        "visual_direction": (
+                            "3-slide carousel: slide 1 is problem statement, slide 2 is product feature, "
+                            "slide 3 is social proof quote."
+                        ),
+                        "cta": "Share this with a friend who needs it.",
+                        "virality_score": 6.8,
+                        "virality_reasoning": (
+                            "Share-based CTA boosts social spread potential but no strong emotional hook in opening line."
+                        ),
+                    },
+                    {
+                        "variant": "B",
+                        "caption": (
+                            "Mock Facebook caption B. Data-led angle. 9 out of 10 customers say this changed their routine. "
+                            "Here is what they found."
+                        ),
+                        "hashtags": ["#MockCampaign"],
+                        "visual_direction": (
+                            "Static image with bold statistic overlay. Clean white background, brand colours."
+                        ),
+                        "cta": "Click to read the full story.",
+                        "virality_score": 7.2,
+                        "virality_reasoning": (
+                            "Social proof data in opening sentence is a strong trust signal that improves click-through."
+                        ),
+                    },
+                ],
             },
-            {
-                "channel": "Instagram",
-                "format": "Reel — 15 seconds",
-                "headline": "Sustainable fashion finally made for him",
-                "body": "Not outdoor gear. Not luxury basics. Just clean, honest everyday clothing — with the receipts to prove it.",
-                "cta": "Shop EcoWear — link in bio",
-            },
-            {
-                "channel": "TikTok",
-                "format": "30-second myth-busting video",
-                "headline": "What sustainable fashion brands won't show you",
-                "body": "We checked three of our competitors' sustainability claims so you don't have to. Here is what we found — and here is what we do differently.",
-                "cta": "Comment your brand and we will check it next",
-            },
-        ],
-        "cta_recommendations": [
-            "Follow to see the full supply chain series — drives account growth from documentary content",
-            "Get the free Sustainable Fashion Guide — drives email capture for consideration nurture",
-            "Shop now and get 15% off your first order — drives conversion from retargeting audiences",
-        ],
-        "creative_direction": (
-            "Raw, documentary-style visual language — natural lighting, real locations, no studio polish. "
-            "The aesthetic should feel like a Vice documentary crossed with a Patagonia field journal. "
-            "Color palette is earthy and muted: cream, olive, slate, raw cotton white. Typography is clean sans-serif. "
-            "No stock photography. Every piece of creative should feel like it was captured on location, not designed in an agency."
-        ),
-        "posting_frequency": {
-            "Instagram": "4 posts per week — 2 Reels, 1 Carousel, 1 Story sequence",
-            "TikTok": "3 videos per week — 1 documentary segment, 1 myth-busting video, 1 community response",
         },
-        "ab_test_suggestions": [
-            {
-                "element": "TikTok hook — first 3 seconds",
-                "variant_a": "Open with the farm — visual-first, no voiceover for 3 seconds",
-                "variant_b": "Open with a bold text claim — 'Most brands lie about sustainability'",
-                "success_metric": "Video completion rate at 45 seconds",
-            },
-            {
-                "element": "Instagram Reel CTA",
-                "variant_a": "Shop EcoWear — link in bio",
-                "variant_b": "Get the free Sustainable Fashion Guide — link in bio",
-                "success_metric": "Click-through rate from profile link",
-            },
-            {
-                "element": "Email subject line for welcome sequence",
-                "variant_a": "Here is exactly where your EcoWear order comes from",
-                "variant_b": "The sustainable fashion guide no brand wanted us to publish",
-                "success_metric": "Email open rate at 48 hours",
-            },
+        "content_creation_checklist": [
+            "Film 2 reel variations for Instagram using the visual directions above",
+            "Prepare 3-slide carousel assets for Facebook",
+            "Write caption copy into scheduling tool before posting",
+            "Review all posts against brand tone guidelines before publishing",
         ],
+        "campaign_hashtag_set": [
+            "#MockCampaign",
+            "#NexBrandAI",
+            "#Marketing",
+            "#Innovation",
+            "#ContentStrategy",
+        ],
+        "posting_frequency": {
+            "Instagram": 4,
+            "Facebook": 3,
+        },
     }
 
 
-def _real_output(brief: dict, context: dict) -> dict:
-    s5 = context.get("stage5") or {}
-    cs = s5.get("campaign_summary") or {}
-    primary = context.get("primary_segment", "")
-    segments = context.get("segments", [])
-    message_angle = ""
-    for s in segments:
-        if s.get("name") == primary:
-            message_angle = s.get("message_angle", "")
-            break
+def _real_output(brief_dict: dict, context: dict, job_id: str) -> dict:
+    brand_name = brief_dict["brand_name"]
+    current_channels = list(brief_dict.get("current_channels") or [])
+    campaign_duration_weeks = brief_dict["campaign_duration_weeks"]
+    budget_currency = brief_dict["budget_currency"]
+
+    core_message = context.get("core_message", "")
+    campaign_hooks = context.get("campaign_hooks") or []
+    content_pillars = context.get("content_pillars") or []
+    tone_guidelines = context.get("tone_guidelines") or []
+    positioning_statement = context.get("positioning_statement", "")
+    persona_name = context.get("persona_name", "")
+    messaging_hooks = context.get("messaging_hooks") or []
+    platform_behaviour = context.get("platform_behaviour") or {}
+    if not isinstance(platform_behaviour, dict):
+        platform_behaviour = {}
+
+    channels_to_prioritize = list(context.get("channels_to_prioritize") or [])
+    merged: list[str] = []
+    seen: set[str] = set()
+    for ch in [*current_channels, *channels_to_prioritize]:
+        if ch and ch not in seen:
+            seen.add(str(ch))
+            merged.append(str(ch))
+    active_channels = merged if merged else ["Instagram", "Facebook"]
+
+    budget_allocation = context.get("budget_allocation") or {}
 
     system_prompt = (
-        "You are a senior creative strategist and media planner with deep expertise in social media advertising and content marketing.\n"
-        "You produce precise, platform-native tactical plans with real ad copy, not placeholder text.\n"
-        "You always respond in valid JSON only — no markdown, no explanation, no preamble.\n"
-        "Every piece of ad copy must sound like it was written by a human copywriter for this specific brand — never generic.\n"
-        "A/B test suggestions must be specific and testable with a clear measurable success metric."
+        "You are a senior social media content strategist nd media planner with deep expertise in social media advertising and content creation.\n"
+        "You create platform-specific content with psychological hooks and measurable virality potential.\n"
+        "Always respond with valid JSON only. No markdown. No explanation outside JSON.\n"
+        "\n"
+        "Virality Score rules (1-10):\n"
+        "- +2 if caption opens with a question or bold statement\n"
+        "- +2 if there is a clear emotional hook (curiosity, aspiration, urgency, humor)\n"
+        "- +1 if it includes a strong call to action\n"
+        "- +1 if it uses social proof or data\n"
+        "- +1 if it has platform-native format (reel hook, carousel tease, thread opener)\n"
+        "- -1 if caption is over the platform character limit\n"
+        "- -1 if it has no hashtags (Instagram/TikTok)\n"
+        "Score is a float. Explain the score in one sentence."
     )
 
-    user_prompt = (
-        "Produce a full tactical execution plan for this campaign.\n\n"
-        f"Brand: {brief['brand_name']}\n"
-        f"Product: {brief['product_or_service']}\n"
-        f"Campaign Theme: {cs.get('campaign_theme', '')}\n"
-        f"Tone of Voice: {cs.get('tone_of_voice', '')}\n"
-        f"Channel Mix: {cs.get('channel_mix', [])}\n"
-        f"Core Message: {s5.get('core_message', '')}\n"
-        f"Campaign Hooks: {s5.get('campaign_hooks', [])}\n"
-        f"Content Pillars: {s5.get('content_pillars', [])}\n"
-        f"Primary Audience: {primary}\n"
-        f"Message Angle: {message_angle}\n\n"
-        "Instructions:\n"
-        "- Write exactly 4 ad copy examples — one per channel/format combination from the channel mix\n"
-        "- Each ad copy must feel native to its platform — TikTok copy sounds different from Instagram copy\n"
-        "- Write exactly 3 CTA recommendations — one per funnel stage (awareness, consideration, conversion)\n"
-        "- Creative direction must be one specific paragraph — visual style, mood, color palette, and what to avoid\n"
-        "- Posting frequency must cover every channel in the channel mix\n"
-        "- Write exactly 3 A/B test suggestions — each with a specific measurable success metric\n"
-        "- Return valid JSON matching exactly the output structure specified"
-    )
+    active_json = json.dumps(active_channels)
+    tone_joined = "; ".join(str(t) for t in tone_guidelines)
+    hooks_joined = ", ".join(str(h) for h in messaging_hooks)
 
-    result = call_claude(system_prompt=system_prompt, user_prompt=user_prompt, temperature=0.7)
-    json.dumps(result)
-    return result
+    user_prompt = f"""Generate a tactical content plan for {brand_name}.
+
+Brand: {brand_name}
+Core Message: {core_message}
+Positioning: {positioning_statement}
+Tone: {tone_joined}
+Target Persona: {persona_name}
+Hooks: {hooks_joined}
+Duration: {campaign_duration_weeks}w ({budget_currency})
+Platforms: {", ".join(active_channels)}
+Data Profiles:
+Pillars: {json.dumps(content_pillars)}
+Behavior: {json.dumps(platform_behaviour)}
+Allocation: {json.dumps(budget_allocation)}
+
+For EACH platform in {active_json}, generate 2 variants (A and B). 
+Respect strict native length rules (IG: 2200 chars, X: 280, LI: 3000, TikTok: script outline, FB: 500).
+
+Return a JSON object matching this structure exactly:
+{{
+  "platform_content": {{
+    "<platform_name>": {{
+      "format_recommendation": "reel|carousel|static|thread|story",
+      "optimal_posting_time": "e.g., Tuesday 7-9pm",
+      "posts": [
+        {{
+          "variant": "A|B",
+          "caption": "Full native caption text with hook",
+          "hashtags": ["3-5 hyper-relevant tags"],
+          "visual_direction": "Visual or video direction details",
+          "cta": "Call to action text",
+          "engagement_triggers": ["2 psychological triggers used, e.g., Curiosity Loop"],
+          "conversion_rationale": "One sentence explaining why this hooks the target persona"
+        }}
+      ]
+    }}
+  }},
+  "content_creation_checklist": ["3 core creative production steps"],
+  "campaign_hashtag_set": ["5 core master campaign hashtags"]
+}}"""
+
+    return call_claude(system_prompt, user_prompt, max_tokens=2500)
