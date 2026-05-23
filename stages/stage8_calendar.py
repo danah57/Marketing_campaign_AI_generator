@@ -22,7 +22,7 @@ def _mock_output(brief: dict, context: dict, job_id: str) -> dict:
     start_date = str(raw_start)[:10] if raw_start else datetime.now().strftime("%Y-%m-%d")
 
     return {
-        "total_days": 3,
+        "total_days": 30,
         "start_date": start_date,
         "days": [
             {
@@ -34,20 +34,84 @@ def _mock_output(brief: dict, context: dict, job_id: str) -> dict:
                 "caption": "Discover something built for you. Tap to explore now."
             },
             {
-                "day": 2,
-                "date": (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d"),
+                "day": 3,
+                "date": (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=2)).strftime("%Y-%m-%d"),
                 "platform": "TikTok",
                 "content_type": "video",
                 "task": "Run UGC-style product showcase and A/B test hooks.",
                 "caption": "Real people. Real results. See the difference today."
             },
             {
-                "day": 3,
-                "date": (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=2)).strftime("%Y-%m-%d"),
+                "day": 5,
+                "date": (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=4)).strftime("%Y-%m-%d"),
                 "platform": "Instagram",
                 "content_type": "story",
                 "task": "Engagement story with poll + conversion CTA.",
                 "caption": "Which style fits you best? Vote now and shop your match."
+            },
+            {
+                "day": 8,
+                "date": (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=7)).strftime("%Y-%m-%d"),
+                "platform": "Facebook",
+                "content_type": "carousel",
+                "task": "Educational carousel explaining product benefits.",
+                "caption": "Swipe to discover the difference."
+            },
+            {
+                "day": 11,
+                "date": (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=10)).strftime("%Y-%m-%d"),
+                "platform": "LinkedIn",
+                "content_type": "post",
+                "task": "Professional audience engagement campaign.",
+                "caption": "Insights that help your business grow."
+            },
+            {
+                "day": 14,
+                "date": (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=13)).strftime("%Y-%m-%d"),
+                "platform": "Instagram",
+                "content_type": "reel",
+                "task": "Influencer collaboration teaser campaign.",
+                "caption": "Something exciting is coming soon."
+            },
+            {
+                "day": 17,
+                "date": (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=16)).strftime("%Y-%m-%d"),
+                "platform": "TikTok",
+                "content_type": "video",
+                "task": "Trending audio reel for reach optimization.",
+                "caption": "This trend is everywhere right now."
+            },
+            {
+                "day": 20,
+                "date": (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=19)).strftime("%Y-%m-%d"),
+                "platform": "Instagram",
+                "content_type": "story",
+                "task": "Interactive Q&A story sequence.",
+                "caption": "Ask us anything today."
+            },
+            {
+                "day": 23,
+                "date": (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=22)).strftime("%Y-%m-%d"),
+                "platform": "Facebook",
+                "content_type": "post",
+                "task": "Customer testimonial showcase.",
+                "caption": "See what our customers are saying."
+            },
+            {
+                "day": 26,
+                "date": (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=25)).strftime("%Y-%m-%d"),
+                "platform": "Instagram",
+                "content_type": "carousel",
+                "task": "Product comparison post with CTA.",
+                "caption": "Compare features and choose your favorite."
+            },
+            {
+                "day": 29,
+                "date": (datetime.strptime(start_date, "%Y-%m-%d") + timedelta(days=28)).strftime("%Y-%m-%d"),
+                "platform": "TikTok",
+                "content_type": "video",
+                "task": "Final month conversion push campaign.",
+                "caption": "Don’t miss out before it’s gone."
             }
         ]
     }

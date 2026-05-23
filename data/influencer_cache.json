@@ -1,6 +1,6 @@
 [
   {
-    "id": 1,
+    "id": 3,
     "primaryPlatform": "YouTube",
     "followersCount": 185000.0,
     "engagementRate": 6.4,
@@ -28,7 +28,7 @@
     ]
   },
   {
-    "id": 2,
+    "id": 4,
     "primaryPlatform": "Instagram",
     "followersCount": 132000.0,
     "engagementRate": 5.8,
@@ -55,7 +55,7 @@
     ]
   },
   {
-    "id": 3,
+    "id": 5,
     "primaryPlatform": "TikTok",
     "followersCount": 248000.0,
     "engagementRate": 7.1,
@@ -83,7 +83,7 @@
     ]
   },
   {
-    "id": 4,
+    "id": 6,
     "primaryPlatform": "YouTube",
     "followersCount": 176500.0,
     "engagementRate": 6.0,
@@ -110,7 +110,7 @@
     ]
   },
   {
-    "id": 5,
+    "id": 7,
     "primaryPlatform": "Instagram",
     "followersCount": 98000.0,
     "engagementRate": 5.2,
@@ -137,7 +137,7 @@
     ]
   },
   {
-    "id": 6,
+    "id": 8,
     "primaryPlatform": "YouTube",
     "followersCount": 301000.0,
     "engagementRate": 8.3,
@@ -164,7 +164,7 @@
     ]
   },
   {
-    "id": 7,
+    "id": 9,
     "primaryPlatform": "Instagram",
     "followersCount": 143000.0,
     "engagementRate": 6.9,
@@ -191,7 +191,7 @@
     ]
   },
   {
-    "id": 8,
+    "id": 10,
     "primaryPlatform": "TikTok",
     "followersCount": 211000.0,
     "engagementRate": 7.7,
@@ -219,7 +219,7 @@
     ]
   },
   {
-    "id": 9,
+    "id": 11,
     "primaryPlatform": "Instagram",
     "followersCount": 119000.0,
     "engagementRate": 5.6,
@@ -246,7 +246,7 @@
     ]
   },
   {
-    "id": 10,
+    "id": 12,
     "primaryPlatform": "YouTube",
     "followersCount": 264000.0,
     "engagementRate": 6.7,
@@ -273,7 +273,7 @@
     ]
   },
   {
-    "id": 11,
+    "id": 13,
     "primaryPlatform": "Instagram",
     "followersCount": 87000.0,
     "engagementRate": 4.8,
@@ -300,7 +300,7 @@
     ]
   },
   {
-    "id": 12,
+    "id": 14,
     "primaryPlatform": "Instagram",
     "followersCount": 154000.0,
     "engagementRate": 6.2,
@@ -327,7 +327,7 @@
     ]
   },
   {
-    "id": 13,
+    "id": 15,
     "primaryPlatform": "TikTok",
     "followersCount": 126000.0,
     "engagementRate": 6.5,
@@ -354,7 +354,7 @@
     ]
   },
   {
-    "id": 14,
+    "id": 16,
     "primaryPlatform": "YouTube",
     "followersCount": 207000.0,
     "engagementRate": 7.3,
@@ -381,7 +381,7 @@
     ]
   },
   {
-    "id": 15,
+    "id": 17,
     "primaryPlatform": "TikTok",
     "followersCount": 94000.0,
     "engagementRate": 5.9,
@@ -408,7 +408,7 @@
     ]
   },
   {
-    "id": 16,
+    "id": 18,
     "primaryPlatform": "Instagram",
     "followersCount": 136000.0,
     "engagementRate": 6.1,
@@ -435,7 +435,7 @@
     ]
   },
   {
-    "id": 17,
+    "id": 19,
     "primaryPlatform": "Instagram",
     "followersCount": 112000.0,
     "engagementRate": 5.5,
@@ -462,7 +462,7 @@
     ]
   },
   {
-    "id": 18,
+    "id": 20,
     "primaryPlatform": "LinkedIn",
     "followersCount": 173000.0,
     "engagementRate": 6.6,
@@ -490,7 +490,7 @@
     ]
   },
   {
-    "id": 20,
+    "id": 30,
     "primaryPlatform": "linkedin",
     "followersCount": 0.0,
     "engagementRate": 3.3,
@@ -518,7 +518,7 @@
     ]
   },
   {
-    "id": 21,
+    "id": 31,
     "primaryPlatform": "linkedin",
     "followersCount": 0.0,
     "engagementRate": 3.9,
@@ -543,6 +543,260 @@
       "style",
       "technology",
       "cooking"
+    ]
+  },
+  {
+    "id": 32,
+    "primaryPlatform": "instagram",
+    "followersCount": 0.0,
+    "engagementRate": 4.7,
+    "categories": [
+      "Beauty",
+      "Lifestyle"
+    ],
+    "contentTypes": [
+      "carousel",
+      "post",
+      "story"
+    ],
+    "collaborationTypes": [
+      "takeover",
+      "affiliate",
+      "unboxing"
+    ],
+    "audienceAgeRange": "25-44",
+    "audienceGender": "all",
+    "audienceLocation": "South America",
+    "interests": [
+      "eco-friendly",
+      "career",
+      "homeschooling",
+      "music"
+    ]
+  },
+  {
+    "id": 33,
+    "primaryPlatform": "twitter",
+    "followersCount": 0.0,
+    "engagementRate": 1.4,
+    "categories": [
+      "Fashion",
+      "Automotive"
+    ],
+    "contentTypes": [
+      "article",
+      "post"
+    ],
+    "collaborationTypes": [
+      "affiliate",
+      "takeover",
+      "brand_ambassador"
+    ],
+    "audienceAgeRange": "18-24",
+    "audienceGender": "female",
+    "audienceLocation": "Europe",
+    "interests": [
+      "music",
+      "cooking",
+      "art",
+      "gadgets"
+    ]
+  },
+  {
+    "id": 35,
+    "primaryPlatform": "linkedin",
+    "followersCount": 0.0,
+    "engagementRate": 4.1,
+    "categories": [
+      "Beauty",
+      "Photography"
+    ],
+    "contentTypes": [
+      "article",
+      "post"
+    ],
+    "collaborationTypes": [
+      "sponsored_post",
+      "product_review",
+      "content_series"
+    ],
+    "audienceAgeRange": "18-34",
+    "audienceGender": "male",
+    "audienceLocation": "North America",
+    "interests": [
+      "restaurants",
+      "nutrition",
+      "beauty",
+      "vegan"
+    ]
+  },
+  {
+    "id": 36,
+    "primaryPlatform": "linkedin",
+    "followersCount": 0.0,
+    "engagementRate": 1.6,
+    "categories": [
+      "Beauty",
+      "Fitness"
+    ],
+    "contentTypes": [
+      "post",
+      "article"
+    ],
+    "collaborationTypes": [
+      "event_appearance",
+      "unboxing",
+      "content_series"
+    ],
+    "audienceAgeRange": "25-44",
+    "audienceGender": "all",
+    "audienceLocation": "North America",
+    "interests": [
+      "gadgets",
+      "business",
+      "basketball",
+      "style"
+    ]
+  },
+  {
+    "id": 37,
+    "primaryPlatform": "instagram",
+    "followersCount": 0.0,
+    "engagementRate": 2.7,
+    "categories": [
+      "Beauty",
+      "Photography"
+    ],
+    "contentTypes": [
+      "carousel",
+      "reel",
+      "story"
+    ],
+    "collaborationTypes": [
+      "unboxing",
+      "affiliate",
+      "event_appearance"
+    ],
+    "audienceAgeRange": "25-34",
+    "audienceGender": "all",
+    "audienceLocation": "MENA",
+    "interests": [
+      "football",
+      "yoga",
+      "swimming",
+      "wellness"
+    ]
+  },
+  {
+    "id": 38,
+    "primaryPlatform": "youtube",
+    "followersCount": 0.0,
+    "engagementRate": 3.7,
+    "categories": [
+      "Food",
+      "Lifestyle"
+    ],
+    "contentTypes": [
+      "story",
+      "video"
+    ],
+    "collaborationTypes": [
+      "sponsored_post",
+      "tutorial",
+      "unboxing"
+    ],
+    "audienceAgeRange": "25-34",
+    "audienceGender": "all",
+    "audienceLocation": "MENA",
+    "interests": [
+      "technology",
+      "makeup",
+      "movies",
+      "restaurants"
+    ]
+  },
+  {
+    "id": 39,
+    "primaryPlatform": "tiktok",
+    "followersCount": 0.0,
+    "engagementRate": 1.0,
+    "categories": [
+      "Technology",
+      "Art"
+    ],
+    "contentTypes": [
+      "story",
+      "video"
+    ],
+    "collaborationTypes": [
+      "event_appearance",
+      "sponsored_post",
+      "content_series"
+    ],
+    "audienceAgeRange": "18-24",
+    "audienceGender": "all",
+    "audienceLocation": "MENA",
+    "interests": [
+      "homeschooling",
+      "cooking",
+      "tennis",
+      "sports"
+    ]
+  },
+  {
+    "id": 40,
+    "primaryPlatform": "twitter",
+    "followersCount": 0.0,
+    "engagementRate": 2.2,
+    "categories": [
+      "Technology",
+      "Art"
+    ],
+    "contentTypes": [
+      "post",
+      "article"
+    ],
+    "collaborationTypes": [
+      "brand_ambassador",
+      "takeover",
+      "content_series"
+    ],
+    "audienceAgeRange": "18-24",
+    "audienceGender": "male",
+    "audienceLocation": "MENA",
+    "interests": [
+      "travel",
+      "entrepreneurship",
+      "nutrition",
+      "movies"
+    ]
+  },
+  {
+    "id": 44,
+    "primaryPlatform": "linkedin",
+    "followersCount": 0.0,
+    "engagementRate": 4.2,
+    "categories": [
+      "Lifestyle",
+      "Travel"
+    ],
+    "contentTypes": [
+      "post",
+      "article"
+    ],
+    "collaborationTypes": [
+      "affiliate",
+      "brand_ambassador",
+      "giveaway"
+    ],
+    "audienceAgeRange": "18-24",
+    "audienceGender": "male",
+    "audienceLocation": "North America",
+    "interests": [
+      "eco-friendly",
+      "technology",
+      "fitness",
+      "nature"
     ]
   }
 ]

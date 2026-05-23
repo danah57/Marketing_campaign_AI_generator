@@ -91,6 +91,7 @@ class CampaignBrief(BaseModel):
     previous_campaign_description: str | None = None
     brand_tone: BrandToneProfile | None = None
     start_date: str | None = None
+    influencer_candidates: list[InfluencerProfile] | None = Field(default_factory=list)
 
 
 class GenerateResponse(BaseModel):
