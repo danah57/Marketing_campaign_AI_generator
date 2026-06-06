@@ -1,0 +1,606 @@
+PYTHON AI SERVICE — Full Audit Report
+Project path: d:\SocialMedia Marketing\AI\campaign_model
+Project name (README): NexBrand AI Campaign Engine
+Audit mode: Read-only — no files modified
+
+1. Full Folder / File Structure
+1.1 Root-level source and config files
+File	Purpose
+main.py	FastAPI application entry point
+agentpipeline.py	Pipeline orchestration, checkpoint manager, run()
+schemas.py	Pydantic request/response models
+requirements.txt	Python dependencies
+.env	Local environment (gitignored)
+.env.example	Environment variable template
+.gitignore	Ignores .venv, .env, checkpoints/, artifacts/, reports/, *.pkl, etc.
+README.md	Project documentation
+TEST_PROMPT.md	Manual test instructions
+modeltest.py	Standalone ML inference smoke test
+test_payload.json	Sample CampaignBrief with influencers
+test_payload_no_influencers.json	Sample brief without influencers
+mock_response.json	Example full GenerateResponse shape
+resume_response.json	Example response (resume/checkpoint scenario)
+1.2 stages/ — pipeline stage modules
+File	Stage
+stages/__init__.py	Package marker only ("""Pipeline stage modules.""")
+stages/stage2_business.py	Stage 2 — Business Analysis
+stages/stage3_competitors.py	Stage 3 — Competitor Intelligence
+stages/stage4_audience.py	Stage 4 — Audience Profiling
+stages/stage5_strategy.py	Stage 5 — Campaign Strategy
+stages/stage6_tactical.py	Stage 6 — Tactical Content
+stages/stage7b_influencer.py	Stage 7b — Influencer Matching
+stages/stage7_evaluation.py	Stage 7 — ML Evaluation
+stages/stage8_calendar.py	Stage 8 — Campaign Calendar
+Note: There is no stage1_*.py. Stage 1 is implemented inline in agentpipeline.run() (save brief only).
+
+Note: There is no pipeline.py. Orchestration is in agentpipeline.py.
+
+1.3 utils/ — LLM and runtime helpers
+File	Purpose
+utils/__init__.py	Empty package
+utils/claude_client.py	Anthropic Claude client for stages 2–6, 7b, 8 (hardcoded model claude-haiku-4-5)
+utils/llm_client.py	Alternate Anthropic client (env-configurable model/tokens); used historically by stage 7 but stage 7 now imports claude_client
+utils/llm_runtime.py	Mock mode, API key validation, run_llm_stage() helper
+1.4 services/ — data loading
+File	Purpose
+services/influencer_loader.py	Load influencer candidates from cache or PostgreSQL
+1.5 data/ — local data cache
+File	Purpose
+data/influencer_cache.json	Cached influencer rows (29 entries at audit time); normalized shape with numeric followersCount / engagementRate
+1.6 checkpoints/ — runtime artifacts (not source code)
+Per-job directories: checkpoints/{job_id}/stage_{N}.json where N is 1, 2, 3, 4, 5, 6, 7, 7b, or 8.
+
+Contains many UUID-named job folders plus named test folders (test-job-001, auth-fallback-test, ecowear-mock-001, etc.). Hundreds of JSON checkpoint files exist at audit time.
+
+1.7 ml/ — machine learning subsystem
+ml/pipeline/ (Python source)
+File	Purpose
+ml/pipeline/inference.py	InferenceEngine class — end-to-end ML prediction + SHAP
+ml/pipeline/preprocessing.py	CampaignPreprocessor, feature engineering, artifact fitting
+ml/pipeline/train_stage1.py	Stage 1 quantile model training
+ml/pipeline/train_stage2.py	Stage 2 ROI/success model training
+ml/pipeline/fix_stage1_engagement_calibration.py	Engagement score calibration fix script
+ml/ (other)
+File	Purpose
+ml/_phase1_audit.py	Data audit script
+ml/model info	Text file (model documentation)
+ml/data/ (datasets)
+File
+ml/data/marketing_campaign_cleaned.csv
+ml/data/marketing_campaign_dataset_v2.csv
+ml/data/train.csv
+ml/data/val.csv
+ml/data/test.csv
+ml/artifacts/ (trained model artifacts — gitignored per .gitignore)
+Path	Contents
+ml/artifacts/numeric_scaler.pkl	Numeric imputer + scaler pipeline
+ml/artifacts/onehot_encoder.pkl	One-hot encoder
+ml/artifacts/preprocessor_meta.pkl	Preprocessor metadata
+ml/artifacts/roi_scaler.pkl	ROI scaler
+ml/artifacts/stage1_clip_bounds.json	Clip bounds per Stage 1 target
+ml/artifacts/stage1/	15 quantile models (clicks_q10.pkl, clicks_q50.pkl, clicks_q90.pkl, same for impressions, conversion_rate, engagement_score, acquisition_cost) + stage1_confidence_tiers.json + stage1_feature_columns.json
+ml/artifacts/stage2/	stage2_roi_model.pkl, stage2_success_model.pkl, shap_explainer_roi.pkl, shap_explainer_success.pkl, stage2_feature_columns.json
+ml/reports/ (training/validation reports — gitignored)
+File
+ml/reports/phase1_data_audit.txt
+ml/reports/phase2_feature_report.txt
+ml/reports/phase2b_data_validation.txt
+ml/reports/phase3_stage1_report.txt
+ml/reports/phase4_stage2_report.txt
+ml/reports/phase5_inference_test.txt
+ml/reports/phase6_validation_report.txt
+ml/reports/stage2_shap_global.txt
+ml/reports/stage2_shap_samples.txt
+1.8 Not present in repo (but referenced)
+No tests/ directory
+No Dockerfile
+No pipeline.py (orchestrator is agentpipeline.py)
+sqlalchemy is used in services/influencer_loader.py but not listed in requirements.txt
+asyncpg is in requirements.txt but influencer loader uses SQLAlchemy with default PostgreSQL driver (typically psycopg2, also not in requirements.txt)
+2. Framework Used
+Layer	Technology
+Web framework	FastAPI (fastapi)
+ASGI server	Uvicorn (uvicorn[standard])
+Validation	Pydantic v2 (pydantic>=2.0.0)
+Environment	python-dotenv
+CORS	fastapi.middleware.cors.CORSMiddleware
+Async	asyncio (asyncio.to_thread, asyncio.wait_for) for /generate
+Streaming	StreamingResponse with SSE (text/event-stream) for /generate/stream
+DB access (optional)	SQLAlchemy create_engine + raw SQL (services/influencer_loader.py)
+NOT used	Flask, Django, LangChain, OpenAI SDK, Celery, Redis
+App title: "Campaign Strategy Backend"
+Default port (docs/README): 8000
+CORS: allow_origins=["*"], allow_credentials=False, all methods/headers
+
+3. All Existing Endpoints
+There are exactly 4 HTTP routes defined in main.py. No other routers or sub-apps.
+
+3.1 GET /health
+Property	Value
+Method	GET
+Path	/health
+Auth	None
+Input	None
+Success status	200
+Output	{"status": "ok"}
+
+3.2 GET /health/detailed
+Property	Value
+Method	GET
+Path	/health/detailed
+Auth	None
+Input	None
+Success status	200
+Output fields	
+{
+  "status": "ok",
+  "claude_model": "claude-haiku-4-5",
+  "anthropic_configured": boolean,
+  "mock_mode": boolean,
+  "mock_auto_fallback": boolean,
+  "mock_auth_fallback": boolean,
+  "stage_order": ["1", "2", "3", "4", "5", "6", "7b", "7", "8"],
+  "influencer_stage": "7b",
+  "endpoints": ["/health", "/health/detailed", "/generate", "/generate/stream"]
+}
+3.3 POST /generate
+Property	Value
+Method	POST
+Path	/generate
+Auth	None
+Content-Type	application/json
+Input body	CampaignBrief (see Section 5)
+Response model	GenerateResponse (see Section 5)
+Handler type	async — runs agentpipeline.run() in thread pool
+Timeout	PIPELINE_TIMEOUT_SECONDS env (default 180s) → 504 HTTPException
+Success status	200
+Error statuses	
+Status	Cause	Body shape
+422	Pydantic validation failure	{"error": "Validation failed", "detail": [FastAPI error objects]}
+500	Unhandled exception in pipeline	{"error": "Pipeline failed", "detail": "<exception string>"}
+504	Pipeline timeout	{"error": "<timeout message string>"}
+3.4 POST /generate/stream
+Property	Value
+Method	POST
+Path	/generate/stream
+Auth	None
+Content-Type	application/json (request), text/event-stream (response)
+Input body	CampaignBrief
+Response	Server-Sent Events stream
+Per-stage timeout	STAGE_TIMEOUT_SECONDS env (default 120s)
+SSE format	data: {JSON}\n\n
+SSE event types
+stage_complete (emitted after stage 1 and each of stages 2–8 + 7b):
+
+{
+  "event": "stage_complete",
+  "stage": 1 | "2" | "3" | "4" | "5" | "6" | "7b" | "7" | "8",
+  "stage_name": "Data Collection" | "Business Analysis" | "Competitor Intelligence" | "Audience Profiling" | "Campaign Strategy" | "Content Generation" | "Influencer Matching" | "ML Evaluation" | "Campaign Calendar",
+  "progress": 8 | 18 | 30 | 42 | 55 | 68 | 78 | 88 | 96
+}
+complete (final):
+
+{
+  "event": "complete",
+  "progress": 100,
+  "result": { /* same shape as GenerateResponse — see Section 5 */ }
+}
+error:
+
+{
+  "event": "error",
+  "message": "<error string>",
+  "progress": -1
+}
+3.5 Schemas defined but NOT exposed as endpoints
+StageCheckpointResponse exists in schemas.py but no HTTP route reads or returns checkpoints. Checkpoints are filesystem-only (checkpoints/{job_id}/).
+
+4. AI / ML Models and Libraries
+4.1 Python dependencies (requirements.txt)
+Package	Version constraint	Used for
+fastapi	(unpinned)	Web API
+uvicorn[standard]	(unpinned)	ASGI server
+pydantic	>=2.0.0	Request/response validation
+python-dotenv	>=1.0.0	.env loading
+anthropic	>=0.25.0	Claude API
+asyncpg	>=0.29.0	Listed but not directly imported in audited source
+scikit-learn	(unpinned)	ML preprocessing + models
+shap	(unpinned)	SHAP explainers for Stage 7
+numpy	(unpinned)	ML numerics
+pandas	(unpinned)	ML dataframes
+Used in code but missing from requirements.txt: sqlalchemy (influencer DB loader)
+
+NOT in project: OpenAI, LangChain, Hugging Face, TensorFlow, PyTorch, spaCy
+
+4.2 LLM — Anthropic Claude
+Property	Value
+Provider	Anthropic (anthropic Python SDK)
+Primary model (claude_client)	Hardcoded "claude-haiku-4-5"
+Alternate model (llm_client)	ANTHROPIC_MODEL env, default claude-haiku-4-5
+Max tokens (claude_client)	Per-call argument (750–4096 depending on stage)
+Max tokens (llm_client)	ANTHROPIC_MAX_TOKENS env, default 4096
+Timeout	ANTHROPIC_TIMEOUT_SECONDS env, default 90
+Temperature	llm_client only: default 0.7; claude_client does not set temperature
+Output format	JSON only (prompts demand valid JSON; fences stripped before json.loads)
+Stages that call Claude (real mode)
+Stage	Client module	max_tokens
+2 Business	utils/claude_client.py	2048
+3 Competitors	utils/claude_client.py	700
+4 Audience	utils/claude_client.py	750
+5 Strategy	utils/claude_client.py	1500
+6 Tactical	utils/claude_client.py	2500
+7b Influencer (outreach only)	utils/claude_client.py	800
+7 Evaluation (explanation only)	utils/claude_client.py	1024
+8 Calendar	utils/claude_client.py	min(4000, max(2000, total_days * 120))
+Mock mode controls (utils/llm_runtime.py)
+Env / condition	Effect
+USE_MOCK_LLM=true	All run_llm_stage() stages use _mock_output
+Missing/placeholder/invalid ANTHROPIC_API_KEY	Auto mock
+Key must start with sk-ant-	Rejects AIza..., sk-proj..., other sk- non-Anthropic keys
+Claude 401 mid-request	enable_mock_fallback_after_auth_failure() — rest of pipeline uses mocks
+4.3 ML — Custom scikit-learn pipeline (ml/pipeline/)
+Architecture
+Two-stage stacked model:
+
+Stage 1 — 5 targets × 3 quantiles (q10, q50, q90) = 15 regression models
+
+Targets: clicks, impressions, conversion_rate, engagement_score, acquisition_cost
+Stored as .pkl files in ml/artifacts/stage1/
+Stage 2 — Uses Stage 1 q50 predictions as scaled features + campaign metadata
+
+stage2_roi_model.pkl — predicts ROI (scaled, then inverse-transformed)
+stage2_success_model.pkl — predicts success probability (predict_proba)
+SHAP explainers: shap_explainer_roi.pkl, shap_explainer_success.pkl
+Verdict thresholds (InferenceEngine.predict_one)
+Verdict	Condition
+LAUNCH	predicted_roi >= 6.5 AND success_probability >= 0.75
+REVISE	predicted_roi >= 5.0 AND success_probability >= 0.50 (and not LAUNCH)
+DROP	Otherwise
+ML input schema (Stage 7 builds this from brief + context)
+{
+  "Channel_Used": str,           # e.g. "Instagram"
+  "Campaign_Type": str,          # e.g. "Social Media"
+  "Audience_age_range": str,     # e.g. "25-34"
+  "Audience_Gender": str,        # "Men" | "Women" | "All Ages"
+  "Customer_Segment": str,       # mapped from industry via _map_industry_to_segment()
+  "Location": str,               # from brief.target_market
+  "Language": str,               # hardcoded "English"
+  "Duration": int,               # duration_weeks * 7 (days)
+  "Date": str,                   # today's date YYYY-MM-DD
+  "Budget": float,               # brief.budget_amount
+}
+Industry → Customer_Segment mapping (Stage 7)
+brief.industry	Customer_Segment
+E-commerce & Retail	Online Shoppers
+Fashion & Beauty	Fashion Enthusiasts
+Food & Beverage	Foodies
+Media & Content Creation	Online Shoppers
+Fitness & Wellness	Health & Wellness
+Home & Local Services	Online Shoppers
+Education & Coaching	Students
+Travel & Hospitality	Travel Enthusiasts
+Real Estate	High-Income Earners
+Healthcare & Wellness	Health & Wellness
+Finance & Business	High-Income Earners
+Technology & Apps	Tech Enthusiasts
+Other	Online Shoppers
+ML categorical columns (ml/pipeline/preprocessing.py CAT_COLS)
+Campaign_Type
+Target_Audience_gender
+Audience_age_range
+Channel_Used
+Location
+Language
+Customer_Segment
+ML numeric scaled columns (NUM_SCALE_COLS)
+Duration, Conversion_Rate, Acquisition_Cost, Clicks, Impressions, Engagement_Score, CTR, Cost_per_Click, month, quarter, day_of_week, season, ROI
+Stage 2 feature columns (44 total, from stage2_feature_columns.json)
+One-hot encoded: Campaign_Type_*, Target_Audience_gender_*, Audience_age_range_*, Channel_Used_*, Location_*, Language_*, Customer_Segment_*
+Scaled numerics: Duration_scaled, Conversion_Rate_scaled, Acquisition_Cost_scaled, Clicks_scaled, Impressions_scaled, Engagement_Score_scaled, CTR_scaled, Cost_per_Click_scaled, month_scaled, quarter_scaled, day_of_week_scaled, season_scaled
+
+ML env controls
+Variable	Purpose
+ML_ROOT_PATH	Directory containing ml/pipeline/inference.py (typically ...\campaign_model\ml)
+SKIP_ML_EVALUATION=true	Stage 7 uses mock ML output instead of InferenceEngine
+5. What It Receives from Node.js and What It Returns
+5.1 Integration pattern
+Node.js (or React directly in dev) sends HTTP POST with JSON body to:
+
+http://localhost:8000/generate (synchronous)
+http://localhost:8000/generate/stream (SSE progress)
+There is no webhook, no queue, no shared auth token validation in this service.
+
+5.2 Input: CampaignBrief (every field)
+Top-level fields
+Field	Type	Required	Constraints / allowed values
+job_id	str | null	No	If omitted, server generates UUID
+brand_name	str	Yes	
+product_or_service	str	Yes	
+industry	IndustryLiteral	Yes	See enum below
+sub_industry	str | null	No	
+target_market	str	Yes	Free text (also fed to ML Location)
+company_size	CompanySizeLiteral	Yes	"Solo", "Small", "Mid-size", "Enterprise"
+campaign_goal	CampaignGoalLiteral	Yes	"Awareness", "Leads", "Sales", "Retention", "Re-engagement"
+campaign_goal_details	str | null	No	
+budget_amount	float	Yes	Must be > 0
+budget_currency	CurrencyLiteral	Yes	"USD", "EUR", "GBP", "EGP", "SAR", "AED"
+campaign_duration_weeks	int	Yes	1–52
+unique_selling_point	str	Yes	
+current_channels	list[ChannelLiteral]	No (default [])	See enum below
+competitors	list[Competitor] | null	No (default [])	
+has_previous_campaigns	bool	Yes	
+previous_campaign_description	str | null	No	
+brand_tone	BrandToneProfile | null	No	
+start_date	str | null	No	Used by Stage 8 calendar
+influencer_candidates	list[InfluencerProfile] | null	No (default [])	For Stage 7b
+IndustryLiteral (exact strings)
+E-commerce & Retail, Fashion & Beauty, Food & Beverage, Media & Content Creation, Fitness & Wellness, Home & Local Services, Education & Coaching, Travel & Hospitality, Real Estate, Healthcare & Wellness, Finance & Business, Technology & Apps, Other
+
+ChannelLiteral (exact strings)
+Instagram, TikTok, YouTube, Facebook, Website, None
+
+Not accepted: Twitter, LinkedIn, X — will cause 422 if sent in current_channels
+
+Nested: Competitor
+Field	Type	Required
+name	str	Yes
+website	str | null	No
+notes	str | null	No
+Important: Pydantic v2 ignores extra fields by default. If Node sends competitors[].platforms, strengths, weaknesses (as in test_payload.json), they are stripped before Stage 3 runs. Stage 3's enrich_competitor() expects platforms on competitor dicts — those will be empty after validation unless schema is extended.
+
+Nested: BrandToneProfile
+Field	Type	Constraints
+tone_formality	int	1–5
+tone_playfulness	int	1–5
+tone_boldness	int	1–5
+preferred_vocabulary	list[str] | null	
+avoided_vocabulary	list[str] | null	
+Nested: InfluencerProfile (in influencer_candidates)
+Field	Type	Required
+id	int	Yes
+bio	str | null	No
+primaryPlatform	str | null	No
+followersCount	str | null	No (string in schema; parsed to float in 7b)
+engagementRate	str | null	No
+categories	list[str] | null	No
+contentTypes	list[str] | null	No
+collaborationTypes	list[str] | null	No
+audienceAgeRange	str | null	No
+audienceGender	str | null	No
+audienceLocation	str | null	No
+interests	list[str] | null	No
+socialMediaLinks	dict | null	No
+5.3 PostgreSQL table used by influencer loader (optional fallback)
+Table: "InfluencerProfiles"
+Filter: "isOnboarded" = true
+No LIMIT in current query
+
+Columns selected from DB
+DB column	Normalized output key	Notes
+"userId"	id	DB uses userId; cache/Node may use id
+"primaryPlatform"	primaryPlatform	
+"followersCount"	followersCount	Parsed to float
+"engagementRate"	engagementRate	Parsed to float
+categories	categories	Array
+"contentTypes"	contentTypes	Array
+"collaborationTypes"	collaborationTypes	Array
+"audienceAgeRange"	audienceAgeRange	
+"audienceGender"	audienceGender	
+"audienceLocation"	audienceLocation	
+interests	interests	Array
+Default DATABASE_URL: postgresql://postgres:12345@localhost:5432/gradproject
+
+5.4 Output: GenerateResponse
+Top-level fields
+Field	Type	Default
+strategy	dict	Required
+calendar	dict	Required
+influencer_matches	list[InfluencerMatch] | null	[]
+influencer_strategy_note	str | null	
+influencer_stage_skipped	bool	True
+strategy object (assembled in agentpipeline.run())
+Key	Source	Description
+campaign_summary	Stage 5	Object (mock has campaign_type, channel_mix, tone_of_voice, campaign_theme, duration_weeks, target_audience; real prompt asks for name, tagline, duration_weeks, total_budget)
+positioning_statement	Stage 5	String
+core_message	Stage 5	String
+campaign_hooks	Stage 5	list[str]
+content_pillars	Stage 5	list[object]
+funnel	Stage 5	Object (mock: nested awareness/consideration/conversion with goal, tactics, kpi; real prompt: arrays per phase)
+kpis	Stage 5	list (mock: strings; real prompt: objects with metric, target, source)
+budget_allocation	Stage 5	Object with percent keys (mock: paid_ads, content_creation, influencer, tools_and_software; real prompt key: budget_allocation_percentage)
+tactical_plan	Stage 6 (full output)	See Stage 6 outputs below
+influencer_strategy_note	Stage 7b	String (duplicated at top level too)
+tactical_plan / Stage 6 output keys
+Key	Description
+platform_content	Per-platform object with format_recommendation, optimal_posting_time, posts[]
+Each post	variant, caption, hashtags, visual_direction, cta, plus mock: virality_score, virality_reasoning; real prompt adds engagement_triggers, conversion_rationale
+content_creation_checklist	list[str]
+campaign_hashtag_set	list[str]
+posting_frequency	Present in mock only ({platform: count}); not in real Claude prompt schema
+calendar / Stage 8 output keys
+Key	Description
+total_days	int
+start_date	str (YYYY-MM-DD)
+days	list[object]
+Each days[] entry (current real + mock):
+
+Field	Type
+day	int
+date	str
+platform	str
+content_type	str (video, carousel, story, reel, post, article)
+task	str
+caption	str
+Note: Older mock_response.json calendar uses different shape (phase, tasks[], channel, owner) from a prior Stage 8 version. Current code uses platform/content_type/task/caption.
+
+influencer_matches[] / InfluencerMatch
+Field	Type
+influencer_id	int
+fit_score	float
+fit_reasoning	str
+suggested_collaboration_type	str
+suggested_budget_usd	float (currently always 0.0 in code)
+outreach_message	str
+5.5 Data NOT returned to Node.js (computed but omitted from API response)
+Stage 7 ML evaluation outputs are stored in context["stage7"] and used by Stage 8 prompts, but are NOT included in GenerateResponse:
+
+Field	Description
+ml_score	Success probability (0–1)
+ml_verdict	LAUNCH / REVISE / DROP
+predicted_roi	Float
+shap_explanation	{roi_drivers, roi_detractors, success_drivers, success_detractors}
+written_explanation	Claude narrative of ML result
+Similarly, individual stage outputs (Stage 2 SWOT, Stage 3 gaps, Stage 4 persona, etc.) are merged into context and checkpoints but only partially surfaced via strategy, calendar, and influencer fields.
+
+6. Existing Recommendation and Insights Logic
+6.1 Pipeline execution order
+Stage 1 (save brief)
+  → Stage 2 Business
+  → Stage 3 Competitors
+  → Stage 4 Audience
+  → Stage 5 Strategy
+  → Stage 6 Tactical
+  → Stage 7b Influencer
+  → Stage 7 ML Evaluation
+  → Stage 8 Calendar
+All stages run sequentially. Shared context dict accumulates each stage's output (also merged at top level via context.update(stage_output)).
+
+Checkpoint resume: if checkpoints/{job_id}/stage_{N}.json exists and stage_failed is not true, stage is skipped (loaded from disk).
+
+6.2 Stage 2 — Business insights (stage2_business.py)
+Real mode: Claude generates JSON with:
+
+business_summary, swot (strengths/weaknesses/opportunities/threats)
+brand_positioning, market_challenges, growth_opportunities, competitive_advantage
+campaign_readiness_score (float), campaign_readiness_reasoning
+tone_descriptor, tone_guidelines
+budget_tier (micro|small|medium|large|enterprise), budget_weekly, recommended_focus
+Mock mode: Static BrewMate/EcoWear-style business analysis.
+
+Downstream use: tone_descriptor, tone_guidelines, recommended_focus, budget_tier, budget_weekly flow to stages 3–6.
+
+6.3 Stage 3 — Competitor insights (stage3_competitors.py)
+Pre-LLM rule engine: enrich_competitor() infers per-competitor:
+
+inferred_strengths, inferred_weaknesses from platform list (instagram/tiktok/youtube/linkedin/twitter)
+positioning_tag from notes keywords (premium/budget/convenience)
+Real mode Claude output:
+
+competitor_summary, content_gaps[], positioning_opportunity
+channels_to_prioritize[], topics_to_avoid[], competitor_weaknesses_to_exploit[]
+Downstream use: channels_to_prioritize used in Stage 6, 7b, 7; positioning_opportunity in Stage 4.
+
+6.4 Stage 4 — Audience insights (stage4_audience.py)
+Real mode Claude output (prompt schema):
+
+persona_name, demographics, pain_points[], desires[], buying_barriers[]
+content_preferences[], platform_behaviour (active_times, consumption, engagement)
+buying_triggers[], messaging_hooks[]
+Mock mode additionally includes: age_range, gender_skew, occupation, primary_segment, primary_segment_reason
+
+Downstream use: Persona fields feed Stage 5–6; primary_segment feeds Stage 7 age/gender extraction.
+
+6.5 Stage 5 — Strategy recommendations (stage5_strategy.py)
+Real mode Claude output:
+
+campaign_summary (name, tagline, duration_weeks, total_budget)
+positioning_statement, core_message, campaign_hooks[]
+content_pillars[] (pillar, description, share_percentage)
+funnel (awareness/consideration/conversion as string arrays in real prompt)
+kpis[] (metric, target, source)
+budget_allocation_percentage (paid_ads, content_creation, influencer, tools_and_software)
+Downstream use: Core strategy drives Stage 6 content; campaign_summary.duration_weeks and campaign_type feed Stage 7 ML and Stage 8 calendar.
+
+6.6 Stage 6 — Tactical content recommendations (stage6_tactical.py)
+Built-in virality rubric (in system prompt):
+
+Rule	Score impact
+Caption opens with question or bold statement	+2
+Clear emotional hook	+2
+Strong CTA	+1
+Social proof or data	+1
+Platform-native format	+1
+Over character limit	−1
+No hashtags (IG/TikTok)	−1
+Real mode output: platform_content per channel with 2 variants (A/B), content_creation_checklist, campaign_hashtag_set
+
+Channel selection logic: merges brief.current_channels + context.channels_to_prioritize, deduplicated; fallback ["Instagram", "Facebook"]
+
+6.7 Stage 7b — Influencer recommendation (stage7b_influencer.py)
+Candidate sourcing (priority order)
+brief.influencer_candidates (from Node POST body)
+load_influencer_candidates() → data/influencer_cache.json first, then PostgreSQL
+If empty → skip stage (influencer_stage_skipped: true)
+Rule-based scoring (compute_influencer_score)
+Signal	Points
+Platform in campaign channels	+2.0
+Engagement rate	up to +3.0 (min(rate * 1.5, 3.0))
+Followers	up to +2.0 (min(followers/200000, 2.0))
+Category overlap with campaign	+1.5 per match
+Audience age match	+1.5
+Audience gender match	+1.0
+Selection: select_top_influencers() — max 3 influencers with score ≥ 5.0
+
+Claude role (real mode only): Generates strategy_note + per-id outreach_templates (not fit scores)
+
+suggested_budget_usd: Hardcoded 0.0 in current code (not AI-calculated)
+
+6.8 Stage 7 — ML campaign evaluation (stage7_evaluation.py)
+Real mode flow:
+
+Build campaign_input dict from brief + Stage 5 context
+InferenceEngine.predict_one() → ROI, success probability, verdict
+SHAP → plain-language drivers/detractors
+Claude writes written_explanation paragraph
+Fallbacks:
+
+SKIP_ML_EVALUATION=true → mock
+ML engine load failure → mock
+ML prediction failure → mock
+Claude explanation failure → mock text with real ML numbers preserved
+Mock output: ml_score: 0.84, ml_verdict: "LAUNCH", predicted_roi: 7.6, static SHAP lists
+
+Critical: These fields are not returned in GenerateResponse to Node.js.
+
+6.9 Stage 8 — Calendar scheduling (stage8_calendar.py)
+Uses:
+
+Stage 5 duration_weeks
+Stage 6 posting_frequency or platform_content keys for channels
+Stage 7 ml_verdict + written_explanation in prompt (REVISE/DROP adjust phase behavior in older prompt variant; current prompt references ML verdict in rules)
+Real mode: Claude generates sparse days[] calendar (not every day); code pads missing days up to total_days
+
+Phases in prompt: Awareness → Engagement → Conversion → Closing
+
+6.10 Other insight mechanisms
+Mechanism	Location	Purpose
+Checkpoint resume	agentpipeline._run_stage()	Re-run failed stages without re-calling API for completed ones
+Auth-fallback mock	utils/llm_runtime.py	Continue pipeline after Claude 401
+Competitor enrichment	stage3_competitors.enrich_competitor()	Deterministic competitor analysis without LLM
+Industry→segment map	stage7_evaluation._map_industry_to_segment()	Bridge brief industry to ML vocabulary
+Age/gender extraction	stage7_evaluation._extract_age_range/gender()	Parse primary_segment text for ML features
+Appendix A — Environment Variables (complete list from .env.example + code)
+Variable	Default	Purpose
+ANTHROPIC_API_KEY	—	Anthropic API key (sk-ant-...)
+ANTHROPIC_MODEL	claude-haiku-4-5	Model for llm_client
+ANTHROPIC_MAX_TOKENS	4096	Max tokens for llm_client
+ANTHROPIC_TIMEOUT_SECONDS	90	Claude HTTP timeout
+PIPELINE_TIMEOUT_SECONDS	180	/generate wall-clock timeout
+STAGE_TIMEOUT_SECONDS	120	Per-stage timeout on /generate/stream
+USE_MOCK_LLM	false (example shows true)	Force mock mode
+DEBUG_LLM	false	Verbose LLM logging
+ALLOWED_ORIGINS	—	Extra CORS origins (also allows *)
+ML_ROOT_PATH	—	ML project root for Stage 7
+SKIP_ML_EVALUATION	false	Skip real ML in Stage 7
+DATABASE_URL	postgresql://postgres:12345@localhost:5432/gradproject	Influencer Postgres
+INFLUENCER_USE_DB	true	Enable DB fallback for influencers
+DB_CONNECT_TIMEOUT_SECONDS	3	Postgres connect timeout
+Appendix B — Known integration gaps (for downstream agents)
+ML evaluation not in API response — ml_score, ml_verdict, predicted_roi, shap_explanation, written_explanation are computed but not returned to Node/React.
+competitors[].platforms stripped — Competitor schema lacks platforms; Stage 3 enrichment won't see them after validation.
+Twitter/LinkedIn not valid channels — Frontend must map to allowed ChannelLiteral values.
+suggested_budget_usd always 0.0 — Influencer budget recommendation not implemented.
+sqlalchemy missing from requirements.txt — DB loader may fail on fresh installs.
+Stage 5 real vs mock schema mismatch — Real prompt uses budget_allocation_percentage and different funnel/kpis shapes vs mock/assembled strategy expectations.
+StageCheckpointResponse has no HTTP endpoint — Checkpoints are filesystem-only.
+No authentication — Service trusts any caller on port 8000.

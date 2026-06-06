@@ -41,6 +41,15 @@ def _strip_markdown_json_fences(text: str) -> str:
     return cleaned.strip()
 
 
+def _retry_delay_seconds(attempt: int) -> float:
+    return float(2 * (attempt + 1))
+
+
+def _is_retriable_api_error(error: anthropic.APIError) -> bool:
+    status_code = getattr(error, "status_code", None)
+    return status_code in {429, 500, 502, 503, 529}
+
+
 def call_claude(system_prompt: str, user_prompt: str, max_tokens: int = 1200) -> dict:
     if not anthropic_api_key_configured():
         raise RuntimeError(
@@ -49,38 +58,79 @@ def call_claude(system_prompt: str, user_prompt: str, max_tokens: int = 1200) ->
         )
 
     client = _get_client()
-    try:
-        response = client.messages.create(
-            model="claude-haiku-4-5",
-            max_tokens=max_tokens,
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_prompt}],
-        )
-    except anthropic.RateLimitError as e:
-        logger.warning("Rate limit hit — retrying once after 2 seconds.")
-        time.sleep(2)
+    tokens = max_tokens
+    last_error: json.JSONDecodeError | None = None
+    last_raw_text = ""
+    max_attempts = 3
+
+    for attempt in range(max_attempts):
         try:
             response = client.messages.create(
                 model="claude-haiku-4-5",
-                max_tokens=max_tokens,
+                max_tokens=tokens,
                 system=system_prompt,
                 messages=[{"role": "user", "content": user_prompt}],
             )
-        except anthropic.RateLimitError as retry_e:
-            raise RuntimeError(f"Claude rate limit exceeded after retry: {retry_e}") from retry_e
-    except anthropic.AuthenticationError as e:
-        enable_mock_fallback_after_auth_failure(str(e))
-        raise RuntimeError(f"Claude authentication failed: {e}") from e
-    except anthropic.APITimeoutError as e:
-        raise RuntimeError(f"Claude API timed out after {_anthropic_timeout_seconds()}s: {e}") from e
-    except anthropic.APIError as e:
-        logger.error(f"Claude API error: {e}")
-        raise RuntimeError(f"Claude API call failed: {e}") from e
+        except anthropic.AuthenticationError as e:
+            enable_mock_fallback_after_auth_failure(str(e))
+            raise RuntimeError(f"Claude authentication failed: {e}") from e
+        except anthropic.RateLimitError as e:
+            if attempt < max_attempts - 1:
+                delay = _retry_delay_seconds(attempt)
+                logger.warning(
+                    "Claude rate limit hit on attempt %s/%s — retrying in %.0fs",
+                    attempt + 1,
+                    max_attempts,
+                    delay,
+                )
+                time.sleep(delay)
+                continue
+            raise RuntimeError(
+                f"Claude rate limit exceeded after {max_attempts} attempts: {e}"
+            ) from e
+        except anthropic.APITimeoutError as e:
+            if attempt < max_attempts - 1:
+                logger.warning(
+                    "Claude API timed out on attempt %s/%s — retrying",
+                    attempt + 1,
+                    max_attempts,
+                )
+                continue
+            raise RuntimeError(
+                f"Claude API timed out after {_anthropic_timeout_seconds()}s: {e}"
+            ) from e
+        except anthropic.APIError as e:
+            if attempt < max_attempts - 1 and _is_retriable_api_error(e):
+                delay = _retry_delay_seconds(attempt)
+                logger.warning(
+                    "Retriable Claude API error on attempt %s/%s (status=%s) — retrying in %.0fs",
+                    attempt + 1,
+                    max_attempts,
+                    getattr(e, "status_code", "unknown"),
+                    delay,
+                )
+                time.sleep(delay)
+                continue
+            logger.error(f"Claude API error: {e}")
+            raise RuntimeError(f"Claude API call failed: {e}") from e
 
-    raw_text = response.content[0].text
-    clean_text = _strip_markdown_json_fences(raw_text)
-    try:
-        return json.loads(clean_text)
-    except json.JSONDecodeError as e:
-        logger.error(f"Claude returned invalid JSON. Raw text: {raw_text!r}")
-        raise ValueError(f"Claude returned invalid JSON: {e}") from e
+        last_raw_text = response.content[0].text
+        clean_text = _strip_markdown_json_fences(last_raw_text)
+        try:
+            return json.loads(clean_text)
+        except json.JSONDecodeError as e:
+            last_error = e
+            stop_reason = getattr(response, "stop_reason", None)
+            if attempt < max_attempts - 1 and stop_reason == "max_tokens" and tokens < 8192:
+                next_tokens = min(tokens * 2, 8192)
+                logger.warning(
+                    "Claude JSON truncated at max_tokens=%s; retrying with max_tokens=%s",
+                    tokens,
+                    next_tokens,
+                )
+                tokens = next_tokens
+                continue
+            break
+
+    logger.error(f"Claude returned invalid JSON. Raw text: {last_raw_text!r}")
+    raise ValueError(f"Claude returned invalid JSON: {last_error}") from last_error

@@ -1,5 +1,6 @@
 """Stage 5: Strategic Framework — messaging and channel strategy blueprint."""
 
+import json
 import logging
 
 from utils.claude_client import call_claude
@@ -9,7 +10,87 @@ logger = logging.getLogger("campaign_model.llm")
 
 
 def run(brief_dict: dict, context: dict, job_id: str) -> dict:
-    return run_llm_stage("Stage 5", _mock_output, _real_output, brief_dict, context, job_id)
+    result = run_llm_stage("Stage 5", _mock_output, _real_output, brief_dict, context, job_id)
+    return normalize_stage5_output(result, brief_dict, context)
+
+
+def normalize_stage5_output(
+    output: dict,
+    brief_dict: dict | None = None,
+    context: dict | None = None,
+    stage6_output: dict | None = None,
+) -> dict:
+    """Align real Claude output with the strategy shape the API and frontend expect."""
+    normalized = dict(output or {})
+    brief_dict = brief_dict or {}
+    context = context or {}
+
+    if "budget_allocation_percentage" in normalized:
+        if not normalized.get("budget_allocation"):
+            normalized["budget_allocation"] = normalized.pop("budget_allocation_percentage")
+        else:
+            normalized.pop("budget_allocation_percentage", None)
+
+    summary = dict(normalized.get("campaign_summary") or {})
+    platforms = summary.get("platforms") or summary.get("channel_mix")
+    if not platforms:
+        if stage6_output:
+            platforms = list((stage6_output.get("platform_content") or {}).keys())
+        if not platforms:
+            platforms = list(context.get("channels_to_prioritize") or [])
+        if not platforms:
+            platforms = list(brief_dict.get("current_channels") or [])
+        if platforms:
+            summary["platforms"] = platforms
+            summary["channel_mix"] = platforms
+
+    normalized["campaign_summary"] = summary
+    return normalized
+
+
+def build_strategy_payload(
+    stage5_output: dict,
+    stage6_output: dict,
+    stage7b_output: dict,
+    brief_dict: dict | None = None,
+    context: dict | None = None,
+) -> dict:
+    context = context or {}
+    stage3_output = context.get("stage3") or {}
+    recommended_platforms = list(
+        stage3_output.get("channels_to_prioritize")
+        or context.get("channels_to_prioritize")
+        or []
+    )
+
+    stage5 = normalize_stage5_output(
+        stage5_output,
+        brief_dict=brief_dict,
+        context=context,
+        stage6_output=stage6_output,
+    )
+    summary = dict(stage5.get("campaign_summary") or {})
+    platforms = summary.get("platforms") or summary.get("channel_mix") or recommended_platforms
+    if platforms and not summary.get("platforms"):
+        summary["platforms"] = platforms
+        summary["channel_mix"] = platforms
+    if recommended_platforms:
+        summary["recommended_platforms"] = recommended_platforms
+
+    return {
+        "campaign_summary": summary,
+        "positioning_statement": stage5.get("positioning_statement", ""),
+        "core_message": stage5.get("core_message", ""),
+        "campaign_hooks": stage5.get("campaign_hooks", []),
+        "content_pillars": stage5.get("content_pillars", []),
+        "funnel": stage5.get("funnel", {}),
+        "kpis": stage5.get("kpis", []),
+        "budget_allocation": stage5.get("budget_allocation", {}),
+        "recommended_platforms": recommended_platforms,
+        "platforms": platforms,
+        "tactical_plan": stage6_output,
+        "influencer_strategy_note": stage7b_output.get("influencer_strategy_note", ""),
+    }
 
 
 def _mock_output(brief_dict: dict, context: dict, job_id: str) -> dict:
@@ -146,7 +227,8 @@ def _real_output(brief_dict: dict, context: dict, job_id: str) -> dict:
 
     system_prompt = (
         "You are a campaign strategist. Synthesize brand, competitive, and audience data into an "
-        "execution blueprint. Return ONLY a valid JSON object matching the requested schema. No markdown."
+        "execution blueprint. Return ONLY a valid JSON object matching the requested schema. "
+        "No markdown fences, no preamble, no text outside JSON. Keep strings concise."
     )
 
     user_prompt = f"""Create a full campaign strategy for {brand_name}.
@@ -166,13 +248,17 @@ Context:
 - Persona: {persona_name} (Pains: {", ".join(str(p) for p in pain_points)} | Desires: {", ".join(str(d) for d in desires)})
 - Hooks: {", ".join(str(h) for h in messaging_hooks)}
 - Activity: Active {pat}, consumes {pcc} content
+
+Brevity rules: max 3 content pillars; max 2 sentences per pillar description; max 3 items per funnel array; max 4 KPIs; each hook under 120 characters.
+
 Return a JSON object with exactly these keys:
 {{
   "campaign_summary": {{
     "name": "Creative name",
     "tagline": "One-line hook/tagline",
     "duration_weeks": {campaign_duration_weeks},
-    "total_budget": {budget_amount}
+    "total_budget": {budget_amount},
+    "platforms": {json.dumps(list(channels_to_prioritize) if channels_to_prioritize else list(brief_dict.get("current_channels") or ["Instagram", "TikTok"]))}
   }},
   "positioning_statement": "For [persona] who [pain], [brand] offers [solution] unlike [competitors].",
   "core_message": "Single most important message of the campaign",
@@ -188,7 +274,7 @@ Return a JSON object with exactly these keys:
   "kpis": [
     {{"metric": "e.g., Conversion Rate", "target": "e.g., 2.5%", "source": "e.g., Shopify Analytics"}}
   ],
-  "budget_allocation_percentage": {{
+  "budget_allocation": {{
     "paid_ads": 0,
     "content_creation": 0,
     "influencer": 0,
@@ -196,4 +282,4 @@ Return a JSON object with exactly these keys:
   }}
 }}"""
 
-    return call_claude(system_prompt, user_prompt, max_tokens=1500)
+    return call_claude(system_prompt, user_prompt, max_tokens=4096)

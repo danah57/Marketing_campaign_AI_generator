@@ -13,7 +13,17 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 import agentpipeline as pipeline
 from agentpipeline import CheckpointManager, checkpoint, _run_stage
-from schemas import CampaignBrief, GenerateResponse
+from schemas import (
+    CampaignBrief,
+    DashboardInsightRequest,
+    DashboardInsightsResponse,
+    GenerateResponse,
+    MetricComparisonRequest,
+    MetricComparisonResponse,
+)
+from services.dashboard_insights_service import generate_dashboard_insights
+from services.metric_comparison_service import generate_metric_comparison
+from services.campaign_logger import campaign_logger
 from stages import (
     stage2_business,
     stage3_competitors,
@@ -117,7 +127,9 @@ async def stream_pipeline(brief: CampaignBrief):
         return f"data: {json_lib.dumps(payload)}\n\n"
 
     # Stage 1 — data collection (no LLM call)
+    campaign_logger.start(job_id, brief_dict)
     cp.save(1, job_id, brief_dict)
+    campaign_logger.log_stage(job_id, 1, brief_dict, source="brief saved")
     context["stage1"] = brief_dict
     yield event({"event": "stage_complete", "stage": 1, "stage_name": "Data Collection", "progress": 8})
 
@@ -133,9 +145,12 @@ async def stream_pipeline(brief: CampaignBrief):
         (8, stage8_calendar.run, "Campaign Calendar", 96),
     ]
 
+    current_stage: int | str = 1
+
     try:
         loop = asyncio.get_running_loop()
         for stage_num, runner, name, progress in stage_plan:
+            current_stage = stage_num
             await asyncio.wait_for(
                 loop.run_in_executor(
                     None,
@@ -148,6 +163,7 @@ async def stream_pipeline(brief: CampaignBrief):
             )
 
     except asyncio.TimeoutError:
+        campaign_logger.fail(job_id, current_stage, f"Stage timed out after {STAGE_TIMEOUT_SECONDS}s")
         yield event(
             {
                 "event": "error",
@@ -157,23 +173,20 @@ async def stream_pipeline(brief: CampaignBrief):
         )
         return
     except Exception as exc:
+        campaign_logger.fail(job_id, current_stage, str(exc))
         yield event({"event": "error", "message": str(exc), "progress": -1})
         return
 
     stage5_output = context.get("stage5", {})
     stage6_output = context.get("stage6", {})
-    strategy = {
-        "campaign_summary": stage5_output.get("campaign_summary", {}),
-        "positioning_statement": stage5_output.get("positioning_statement", ""),
-        "core_message": stage5_output.get("core_message", ""),
-        "campaign_hooks": stage5_output.get("campaign_hooks", []),
-        "content_pillars": stage5_output.get("content_pillars", []),
-        "funnel": stage5_output.get("funnel", {}),
-        "kpis": stage5_output.get("kpis", []),
-        "budget_allocation": stage5_output.get("budget_allocation", {}),
-        "tactical_plan": stage6_output,
-        "influencer_strategy_note": context.get("stage7b", {}).get("influencer_strategy_note", ""),
-    }
+    stage7b_output = context.get("stage7b", {})
+    strategy = stage5_strategy.build_strategy_payload(
+        stage5_output,
+        stage6_output,
+        stage7b_output,
+        brief_dict,
+        context,
+    )
     final_result = {
         "strategy": strategy,
         "calendar": context.get("stage8", {"total_days": 0, "start_date": "pending", "days": []}),
@@ -181,6 +194,7 @@ async def stream_pipeline(brief: CampaignBrief):
         "influencer_strategy_note": context.get("stage7b", {}).get("influencer_strategy_note", ""),
         "influencer_stage_skipped": context.get("stage7b", {}).get("influencer_stage_skipped", True),
     }
+    campaign_logger.complete(job_id, final_result)
     yield event({"event": "complete", "progress": 100, "result": final_result})
 
 
@@ -200,7 +214,13 @@ def health_detailed() -> dict:
         "mock_auth_fallback": mock_llm_auth_fallback(),
         "stage_order": ["1", "2", "3", "4", "5", "6", "7b", "7", "8"],
         "influencer_stage": "7b",
-        "endpoints": ["/health", "/health/detailed", "/generate", "/generate/stream"],
+        "endpoints": [
+            "/health",
+            "/health/detailed",
+            "/generate",
+            "/generate/stream",
+            "/dashboard-insights",
+        ],
     }
 
 
@@ -265,3 +285,44 @@ async def generate_stream(brief: CampaignBrief):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+@app.post("/dashboard-insights", response_model=DashboardInsightsResponse)
+async def dashboard_insights(request: DashboardInsightRequest) -> DashboardInsightsResponse:
+    _log.info("POST /dashboard-insights brand=%s mock=%s", request.brand_name, use_mock_llm())
+    try:
+        data = request.model_dump()
+        result = await asyncio.wait_for(
+            asyncio.to_thread(generate_dashboard_insights, data),
+            timeout=PIPELINE_TIMEOUT_SECONDS,
+        )
+        return DashboardInsightsResponse(**result)
+    except asyncio.TimeoutError as exc:
+        raise HTTPException(
+            status_code=504,
+            detail="Insights generation timed out",
+        ) from exc
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={"error": "Insights failed", "detail": str(e)},
+        ) from e
+
+
+@app.post("/metric-comparison", response_model=MetricComparisonResponse)
+async def metric_comparison(request: MetricComparisonRequest) -> MetricComparisonResponse:
+    _log.info("POST /metric-comparison brand=%s mock=%s", request.brand_name, use_mock_llm())
+    try:
+        data = request.model_dump()
+        result = await asyncio.wait_for(
+            asyncio.to_thread(generate_metric_comparison, data),
+            timeout=PIPELINE_TIMEOUT_SECONDS,
+        )
+        return MetricComparisonResponse(**result)
+    except asyncio.TimeoutError as exc:
+        raise HTTPException(status_code=504, detail="Comparison timed out") from exc
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={"error": "Comparison failed", "detail": str(e)},
+        ) from e

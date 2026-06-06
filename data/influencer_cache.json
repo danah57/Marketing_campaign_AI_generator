@@ -798,5 +798,31 @@
       "fitness",
       "nature"
     ]
+  },
+  {
+    "id": 49,
+    "primaryPlatform": "Instagram",
+    "followersCount": 0.0,
+    "engagementRate": 0.0,
+    "categories": [
+      "Food",
+      "Fashion",
+      "Beauty",
+      "Lifestyle"
+    ],
+    "contentTypes": [
+      "Story",
+      "Reel"
+    ],
+    "collaborationTypes": [
+      "Product Review"
+    ],
+    "audienceAgeRange": "18–24",
+    "audienceGender": "Mostly Female",
+    "audienceLocation": "Egypt",
+    "interests": [
+      "Technology",
+      "Travel"
+    ]
   }
 ]

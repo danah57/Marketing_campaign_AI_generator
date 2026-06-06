@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Callable
 
 from schemas import CampaignBrief
+from services.campaign_logger import campaign_logger
 from utils.llm_runtime import reset_llm_runtime_state, use_mock_llm
 from stages import (
     stage2_business,
@@ -71,6 +72,7 @@ def _run_stage(
             logger.info(f"Stage {stage_number}: loaded from checkpoint.")
             context[f"stage{stage_number}"] = cached
             context.update(cached)
+            campaign_logger.log_stage(job_id, stage_number, cached, source="loaded from checkpoint")
             return cached
         logger.warning(f"Stage {stage_number}: previous run failed — re-running.")
 
@@ -81,6 +83,8 @@ def _run_stage(
     except RuntimeError as e:
         error_checkpoint = {"error": str(e), "stage_failed": True, "stage": str(stage_number)}
         checkpoint.save(stage_number, job_id, error_checkpoint)
+        campaign_logger.log_stage(job_id, stage_number, error_checkpoint, source="failed")
+        campaign_logger.fail(job_id, stage_number, str(e))
         logger.error(f"Stage {stage_number} failed for job {job_id}: {e}")
         raise
 
@@ -88,6 +92,7 @@ def _run_stage(
     logger.info("Stage %s: complete in %.1fs (job %s)", stage_number, elapsed, job_id)
 
     checkpoint.save(stage_number, job_id, stage_output)
+    campaign_logger.log_stage(job_id, stage_number, stage_output, elapsed_seconds=elapsed)
     context[f"stage{stage_number}"] = stage_output
     context.update(stage_output)
     return stage_output
@@ -106,7 +111,9 @@ def run(brief: CampaignBrief) -> dict:
     brief_dict = brief.model_dump(mode="json")
     context: dict = {}
 
+    campaign_logger.start(job_id, brief_dict)
     checkpoint.save(1, job_id, brief_dict)
+    campaign_logger.log_stage(job_id, 1, brief_dict, source="brief saved")
     context["stage1"] = brief_dict
 
     _run_stage(2, stage2_business.run, brief_dict, context, job_id)
@@ -120,19 +127,15 @@ def run(brief: CampaignBrief) -> dict:
 
     stage5_output = context.get("stage5", {})
     stage6_output = context.get("stage6", {})
+    stage7b_output = context.get("stage7b", {})
 
-    strategy = {
-        "campaign_summary": stage5_output.get("campaign_summary", {}),
-        "positioning_statement": stage5_output.get("positioning_statement", ""),
-        "core_message": stage5_output.get("core_message", ""),
-        "campaign_hooks": stage5_output.get("campaign_hooks", []),
-        "content_pillars": stage5_output.get("content_pillars", []),
-        "funnel": stage5_output.get("funnel", {}),
-        "kpis": stage5_output.get("kpis", []),
-        "budget_allocation": stage5_output.get("budget_allocation", {}),
-        "tactical_plan": stage6_output,
-        "influencer_strategy_note": context.get("stage7b", {}).get("influencer_strategy_note", ""),
-    }
+    strategy = stage5_strategy.build_strategy_payload(
+        stage5_output,
+        stage6_output,
+        stage7b_output,
+        brief_dict,
+        context,
+    )
 
     final_response = {
         "strategy": strategy,
@@ -148,6 +151,8 @@ def run(brief: CampaignBrief) -> dict:
         "influencer_strategy_note": context.get("stage7b", {}).get("influencer_strategy_note", ""),
         "influencer_stage_skipped": context.get("stage7b", {}).get("influencer_stage_skipped", True),
     }
+
+    campaign_logger.complete(job_id, final_response)
 
     if not DEBUG_KEEP_CHECKPOINTS:
         checkpoint.clear(job_id)

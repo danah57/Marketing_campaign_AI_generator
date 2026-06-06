@@ -156,6 +156,17 @@ def _real_output(brief: dict, context: dict, job_id: str) -> dict:
     else:
         channels = list(posting_frequency.keys())
 
+    # Sparse calendar: scheduled posts spread across the campaign, not one entry per day.
+    if posting_frequency and isinstance(posting_frequency, dict):
+        weekly_posts = sum(
+            int(v) for v in posting_frequency.values() if isinstance(v, (int, float))
+        )
+        target_posts = min(20, max(10, weekly_posts * max(1, int(duration_weeks) // 2)))
+    else:
+        target_posts = min(18, max(10, int(duration_weeks) * 3))
+
+    max_tokens = min(8192, max(4096, target_posts * 350))
+
     # ── ML Context ───────────────────────────
     ml_verdict = context.get("stage7", {}).get("ml_verdict", "LAUNCH")
     ml_explanation = context.get("stage7", {}).get("written_explanation", "")
@@ -166,8 +177,6 @@ def _real_output(brief: dict, context: dict, job_id: str) -> dict:
         "Generate a structured, realistic, high-performance campaign calendar. "
         "Return ONLY valid JSON. No markdown, no explanation."
     )
-
-    max_tokens = min(4000, max(2000, int(total_days) * 120))
 
     # ── Improved Agency-Level Prompt ─────────
     user_prompt = f"""
@@ -180,6 +189,8 @@ Brand: {brief.get('brand_name', 'N/A')}
 Product: {brief.get('product_or_service', 'N/A')}
 Goal: {brief.get('campaign_goal', 'N/A')}
 Platforms: {channels}
+Campaign span: {total_days} days ({duration_weeks} weeks)
+Scheduled posts to generate: {target_posts} (NOT one post per day)
 Start Date: {start_date}
 ML Verdict: {ml_verdict}
 Context: {ml_explanation}
@@ -193,14 +204,13 @@ Context: {ml_explanation}
 - Pattern interrupt: first frame of every video must be unexpected
 
 STRICT RULES:
-- Do NOT post every day unless necessary
-- Use smart spacing (1–2 day gaps between feed posts)
--content_type MUST be EXACTLY one of:
-'video', 'carousel', 'story', 'reel', 'post', 'article'
+- Generate EXACTLY {target_posts} day entries in the days array
+- Spread posts across the full {total_days}-day campaign with 1–3 day gaps
+- Do NOT generate an entry for every calendar day
+- content_type MUST be EXACTLY one of: video, carousel, story, reel, post, article
 - Mix: reels, stories, ads, engagement posts
-- Build narrative phases:
-  Awareness → Engagement → Conversion → Closing
-- Optimize for performance, NOT volume
+- Build narrative phases: Awareness → Engagement → Conversion → Closing
+- task: one short sentence (max 120 chars). caption: hook or hashtags (max 80 chars)
 
 OUTPUT JSON FORMAT:
 {{
@@ -208,7 +218,7 @@ OUTPUT JSON FORMAT:
   "start_date": "{start_date}",
   "days": [
     {{
-      "day": day_number(example: 1),
+      "day": 1,
       "date": "{start_date}",
       "platform": "Instagram",
       "content_type": "reel",
@@ -242,29 +252,31 @@ OUTPUT JSON FORMAT:
         logger.error("Invalid LLM output structure. Falling back.")
         return _mock_output(brief, context, job_id)
 
-    # ── Smart Padding ────────────────────────
+    # ── Light fallback if LLM returns too few posts ─────────────────
     fallback_platform = channels[0] if channels else "Instagram"
+    min_posts = min(8, target_posts)
 
-    if len(processed_days) < total_days:
+    if len(processed_days) < min_posts:
         logger.warning(
-            f"Padding missing days: got {len(processed_days)} / needed {total_days}"
+            f"Padding sparse calendar: got {len(processed_days)} posts, target was {target_posts}"
         )
 
-        for d in range(len(processed_days) + 1, total_days + 1):
-            target_date = (start_dt + timedelta(days=d - 1)).strftime("%Y-%m-%d")
+        for i in range(len(processed_days), min_posts):
+            day_num = max(1, (i + 1) * (total_days // min_posts))
+            target_date = (start_dt + timedelta(days=day_num - 1)).strftime("%Y-%m-%d")
 
             processed_days.append({
-                "day": d,
+                "day": day_num,
                 "date": target_date,
-                "platform": channels[d % len(channels)] if channels else fallback_platform,
+                "platform": channels[i % len(channels)] if channels else fallback_platform,
                 "content_type": "post",
-                "task": "Run optimization audit + review campaign performance metrics.",
+                "task": "Review campaign performance and optimize top-performing content.",
                 "caption": "Discover our latest updates. Tap to learn more."
             })
 
     # ── Final Output ─────────────────────────
     return {
-        "total_days": len(processed_days),
+        "total_days": total_days,
         "start_date": start_date,
         "days": processed_days
     }

@@ -107,3 +107,82 @@ class StageCheckpointResponse(BaseModel):
     stage: str | int
     status: str  # "complete" | "cached" | "failed"
     output: dict
+
+
+class DashboardInsightRequest(BaseModel):
+    brand_name: str
+    industry: str
+    campaign_goal: str
+    active_campaigns: int
+    total_reach: float
+    engagement_rate: float
+    total_conversions: float
+    campaign_roi: float
+    top_channel: str | None = None
+    top_channel_engagement: float | None = None
+    top_influencer_score: float | None = None
+    budget_utilization: float | None = None  # 0.0–1.0
+    previous_period_reach: float | None = None
+    previous_period_engagement: float | None = None
+
+
+class DashboardInsight(BaseModel):
+    id: str
+    type: str  # 'positive' | 'negative' | 'neutral' | 'metric'
+    message: str
+    metric: str | None = None
+    change: float | None = None
+
+
+class DashboardRecommendation(BaseModel):
+    id: str
+    priority: str  # 'High' | 'Medium' | 'Low'
+    action: str
+    impact: str
+
+
+class DashboardInsightsResponse(BaseModel):
+    insights: list[DashboardInsight]
+    recommendations: list[DashboardRecommendation]
+    generated_at: str  # ISO timestamp
+
+
+class MetricComparison(BaseModel):
+    metric: str  # 'reach' | 'engagement_rate' | 'conversions' | 'roi' | 'clicks'
+    label: str
+    predicted: float
+    actual: float
+    unit: str  # '' | '%' | 'x'
+    achievement_rate: float
+    status: str  # 'exceeded' | 'on_track' | 'below' | 'critical'
+
+
+class CampaignMetricComparison(BaseModel):
+    campaign_id: int
+    campaign_name: str
+    metrics: list[MetricComparison]
+    overall_achievement: float
+    verdict: str
+
+
+class MetricComparisonRequest(BaseModel):
+    brand_name: str
+    industry: str
+    actual_reach: float = 0
+    actual_engagement_rate: float = 0
+    actual_conversions: float = 0
+    actual_roi: float = 0
+    actual_clicks: float = 0
+    predicted_reach: float = 0
+    predicted_engagement_rate: float = 0
+    predicted_conversions: float = 0
+    predicted_roi: float = 0
+    predicted_clicks: float = 0
+    campaigns: list[dict] = Field(default_factory=list)
+
+
+class MetricComparisonResponse(BaseModel):
+    brand_level: list[MetricComparison]
+    campaign_level: list[CampaignMetricComparison]
+    ai_analysis: str
+    generated_at: str

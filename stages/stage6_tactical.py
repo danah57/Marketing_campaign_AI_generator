@@ -178,8 +178,9 @@ Pillars: {json.dumps(content_pillars)}
 Behavior: {json.dumps(platform_behaviour)}
 Allocation: {json.dumps(budget_allocation)}
 
-For EACH platform in {active_json}, generate 2 variants (A and B). 
+For EACH platform in {active_json}, generate 2 variants (A and B).
 Respect strict native length rules (IG: 2200 chars, X: 280, LI: 3000, TikTok: script outline, FB: 500).
+Keep captions concise (under 400 chars unless platform requires more). One sentence per visual_direction and conversion_rationale.
 
 Return a JSON object matching this structure exactly:
 {{
@@ -204,4 +205,4 @@ Return a JSON object matching this structure exactly:
   "campaign_hashtag_set": ["5 core master campaign hashtags"]
 }}"""
 
-    return call_claude(system_prompt, user_prompt, max_tokens=2500)
+    return call_claude(system_prompt, user_prompt, max_tokens=4096)

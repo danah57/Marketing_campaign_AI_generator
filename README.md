@@ -197,6 +197,12 @@ copy .env.example .env          # Windows
 uvicorn main:app --reload --port 8000
 ```
 
+For full `/generate` runs (2–3 minutes), prefer **without** `--reload` so file saves do not restart the server mid-pipeline:
+
+```bash
+uvicorn main:app --port 8000
+```
+
 React dev server is typically **http://localhost:3000**; AI engine **http://localhost:8000**.
 
 ---
@@ -293,10 +299,28 @@ Test fixtures: **`test_payload.json`** (with influencers), **`test_payload_no_in
 | `ml/` | ML artifacts + `pipeline/inference.py` for stage 7 |
 | `data/influencer_cache.json` | Offline influencer cache for loader |
 | `checkpoints/` | Per-job stage JSON (resume on retry) |
+| `campaigns/` | Per-job generation log + stage outputs + final response |
 
 ---
 
-## Brand tone profile
+## Campaign logs (`campaigns/`)
+
+Each `/generate` or `/generate/stream` run writes a folder:
+
+```
+campaigns/{job_id}/
+  meta.json           # status, brand, stages completed
+  generation.log      # timestamped pipeline events
+  brief.json          # stage 1 input
+  stage_2.json … stage_8.json, stage_7b.json
+  response.json       # final API payload (on success)
+```
+
+Override location with `CAMPAIGNS_DIR` in `.env`. Logs are kept even when checkpoints are cleared.
+
+---
+
+## Checkpoints
 
 Captured in React/Node onboarding as **`BrandToneProfile`** (`tone_formality`, `tone_playfulness`, `tone_boldness`, preferred/avoided vocabulary). Stage 2 injects it into prompts; later stages inherit **`tone_descriptor`** / **`tone_guidelines`** from context.
 
